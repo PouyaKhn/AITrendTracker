@@ -36,15 +36,57 @@ An automated news scraping service that uses the `news-please` library to collec
    cd Secondment
    ```
 
-2. Create a virtual environment:
+2. **Virtual Environment Setup** (Recommended):
+   
+   Create a fresh virtual environment:
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   python3 -m venv venv
+   ```
+   
+   **Activate the virtual environment:**
+   
+   **Linux/macOS (bash/zsh):**
+   ```bash
+   source venv/bin/activate
+   ```
+   
+   **Windows (Command Prompt):**
+   ```cmd
+   venv\Scripts\activate.bat
+   ```
+   
+   **Windows (PowerShell):**
+   ```powershell
+   venv\Scripts\Activate.ps1
+   ```
+   
+   **Fish Shell:**
+   ```fish
+   source venv/bin/activate.fish
+   ```
+   
+   **C Shell (csh/tcsh):**
+   ```csh
+   source venv/bin/activate.csh
+   ```
+   
+   **Note:** You can verify the virtual environment is active by checking that `(venv)` appears at the beginning of your command prompt, or by running:
+   ```bash
+   echo $VIRTUAL_ENV  # Linux/macOS
+   echo %VIRTUAL_ENV%  # Windows Command Prompt
+   echo $env:VIRTUAL_ENV  # Windows PowerShell
    ```
 
 3. Install dependencies:
    ```bash
    pip install -r requirements.txt
+   ```
+   
+   **Verified Dependencies:** All packages install successfully without import errors on Python 3.13+
+
+4. **Quick Setup Script**: For automated setup, you can use the provided script:
+   ```bash
+   ./dev_setup.sh
    ```
 
 ## Configuration
@@ -63,18 +105,87 @@ The application can be configured through environment variables:
 
 ## Usage
 
-Run the news scraping service:
+The news scraping pipeline supports two modes of operation:
+
+### Continuous Mode (Default)
+
+Run the continuous pipeline with 30-minute intervals:
 
 ```bash
 python main.py
 ```
 
-The service will:
-1. Start the scheduler
-2. Run an initial scraping job
-3. Continue scraping at the configured interval
-4. Clean up old data files based on retention policy
-5. Log all activities to console and optionally to file
+This mode will:
+1. Start the scheduler with automatic 30-minute intervals
+2. Run an initial pipeline batch immediately
+3. Continue running batches every 30 minutes
+4. Log all activities to both console and rotating log files
+5. Handle graceful shutdown on SIGINT/SIGTERM
+
+### Single Batch Verification Mode
+
+Run a single batch for testing and verification:
+
+```bash
+python main.py --once
+```
+
+This mode will:
+1. Execute `verification.test_single_batch()` once
+2. Verify that articles are properly fetched, processed, and stored
+3. Display comprehensive verification results
+4. Exit after completion
+
+### CLI Options
+
+```bash
+python main.py [options]
+
+Options:
+  --once        Run single batch verification test instead of continuous mode
+  --version     Show version information
+  --help        Show help message and usage examples
+```
+
+### Environment Variables
+
+Customize the pipeline behavior using environment variables:
+
+```bash
+# Set fetch interval (default: 30 minutes)
+export FETCH_INTERVAL=30
+
+# Set storage directory (default: ./data)
+export STORAGE_DIR=/path/to/storage
+
+# Set log file path (default: ./logs/news_scraper.log)
+export LOG_PATH=/path/to/logfile.log
+
+# Set logging level (default: INFO)
+export LOG_LEVEL=DEBUG
+
+# Set maximum articles to process (default: 100)
+export MAX_ARTICLES=50
+
+# Run the pipeline
+python main.py
+```
+
+### Examples
+
+```bash
+# Run continuous pipeline with default settings
+python main.py
+
+# Run single verification test
+python main.py --once
+
+# Run with custom fetch interval (60 minutes)
+FETCH_INTERVAL=60 python main.py
+
+# Run with debug logging
+LOG_LEVEL=DEBUG python main.py --once
+```
 
 ## Data Storage
 
