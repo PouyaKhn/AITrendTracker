@@ -1,0 +1,107 @@
+name: Check Virtual Environment
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  check-venv:
+    runs-on: ubuntu-latest
+    name: Verify Virtual Environment Setup
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'  # Use specific version for consistency
+
+    - name: Create virtual environment and verify activation
+      run: |
+        echo "Creating virtual environment..."
+        python3 -m venv venv
+        
+        echo "Activating virtual environment and checking VIRTUAL_ENV..."
+        source venv/bin/activate
+        
+        # Check if VIRTUAL_ENV is set
+        if [ -z "$VIRTUAL_ENV" ]; then
+          echo "❌ FAILURE: Virtual environment is not activated (VIRTUAL_ENV is empty)"
+          echo "Expected: VIRTUAL_ENV should point to virtual environment path"
+          echo "Actual: VIRTUAL_ENV='$VIRTUAL_ENV'"
+          exit 1
+        else
+          echo "✅ SUCCESS: Virtual environment is activated"
+          echo "VIRTUAL_ENV: $VIRTUAL_ENV"
+          echo "Python path: $(which python)"
+          echo "Pip path: $(which pip)"
+        fi
+        
+        # Verify paths are within the venv directory
+        if [[ $(which python) == *"venv"* ]]; then
+          echo "✅ Python is using virtual environment"
+        else
+          echo "❌ FAILURE: Python is not using virtual environment"
+          echo "Python path: $(which python)"
+          exit 1
+        fi
+
+    - name: Install dependencies and test imports
+      run: |
+        source venv/bin/activate
+        
+        # Verify we're still in the virtual environment
+        if [ -z "$VIRTUAL_ENV" ]; then
+          echo "❌ FAILURE: Virtual environment lost between steps"
+          exit 1
+        fi
+        
+        echo "Installing dependencies..."
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        
+        echo "Testing package imports..."
+        python3 -c "
+try:
+    import newsplease
+    import schedule
+    import tqdm
+    import requests
+    import boto3
+    import dateutil
+    import loguru
+    import pytest
+    import dotenv
+    import transformers
+    import torch
+    print('✅ All packages imported successfully!')
+except ImportError as e:
+    print(f'❌ Import error: {e}')
+    exit(1)
+"
+
+    - name: Test dev setup script
+      run: |
+        # Make script executable
+        chmod +x dev_setup.sh
+        
+        # Remove existing venv to test fresh setup
+        rm -rf venv
+        
+        # Run the dev setup script
+        ./dev_setup.sh
+        
+        # Verify the script worked
+        if [ ! -d "venv" ]; then
+          echo "❌ FAILURE: dev_setup.sh did not create virtual environment"
+          exit 1
+        fi
+        
+        echo "✅ dev_setup.sh executed successfully"
+
+
