@@ -1,0 +1,66 @@
+[
+  {
+    "url": "https://www.theglobeandmail.com/business/article-canadian-businesses-turn-to-ai-to-cut-energy-use-and-emissions/",
+    "title": "Canadian businesses turn to AI to cut energy use and emissions",
+    "text": "When Halifax-based artificial intelligence firm EcoPilot first approached Crombie Real Estate Investment Trust about using its software to cut energy use in its Halifax office buildings, Pat Poirier was skeptical. “I’ve been at this job for 42 years,” says Mr. Poirier, director of operational sustainability for the New Glasgow, N.S.-headquartered company, which has a portfolio of more than 300 commercial, retail and residential properties across Canada. “New initiatives are a little hard to get by me sometimes.” Still, EcoPilot’s pitch caught his attention: a network of wireless sensors linked to AI software that automatically adjusts heating, ventilation and air-conditioning (HVAC) systems in real time – and even forecasts future demand – to reduce both costs and emissions. “It lived up to everything they said it was going to do,” he says. “It reduced our HVAC kilowatt consumption by about 17 per cent and reduced our gas use by approximately 15 per cent.” Since their first pilot in 2018, Crombie has rolled out EcoPilot’s solution across five commercial buildings in Halifax. The results, Mr. Poirier says, have been quite positive. For example, he says the AI software and sensor system save 1.6 million kilowatt-hours of energy a year – about $170,000 in operating costs – at a three-building complex they own. Crombie is part of a growing number of Canadian companies turning to AI to cut energy use and advance climate goals. According to Efficiency Canada, spending on energy-efficiency programs climbed to more than $1.5-billion in 2023 – a 27 per cent increase over the previous year. Mohamad Araji, director of the University of Waterloo’s Architectural Engineering Program and head of their Symbiosis Lab, an interdisciplinary group focused on innovative building systems, says AI tools can eliminate human error and significantly speed up data analysis. “It is helping us handle big data sets and [understand] different behaviours that would be difficult to model,” he says. This, in turn, allows building developers and managers to make more informed decisions. Canadian real estate company Cadillac Fairview has adopted AI-driven HVAC systems across marquee office properties, including Toronto’s TD Centre and Calgary City Centre. Retailers such as Sleep Country, SAIL Canada and Dollar Tree have also introduced AI-powered systems with smart sensors that track energy use and adjust in real time. “HVAC is a huge operating expense for most buildings – upwards of 40 per cent,” says Jennie King, general manager for EcoPilot. Improving that not only helps manage costs, it also advances decarbonization goals, she says. Ms. King says that when EcoPilot began selling its optimization software eight years ago, few companies were ready to trust AI with energy management. Today, many are looking to go further, integrating whole-building systems where AI not only manages heating and cooling, but also anticipates peak demand and coordinates with other power-intensive operations, such as electric vehicle charging. “It’s about getting everything to work together,” she says. That same idea, using AI to optimize complex energy systems, is now spreading to industrial operations. Toronto-based Edgecom Energy, led by co-founder and chief executive Behdad Bahramiled is taking a similar approach. The company’s AI platform analyzes real-time grid and facility data to predict energy demand and pricing, helping manufacturers shift or reduce consumption during costly peak periods. “Customers can use that data to make some changes inside their facilities,” Mr. Bahrami says. That ranges from adjusting production schedules and deploying batteries or generators during peak demand to fine-turning non-critical systems such as HVAC, lighting and EV fleets to align with real-time grid conditions. The result, Mr. Bahrami says, is a more efficient and responsive energy strategy – one that cuts emissions while saving companies millions of dollars a year. “We’re predicting the prices, we’re orchestrating it, and then we’re deploying and controlling those solutions for customers,” he says. The company is working with 200 facilities, from food processors to pulp and paper mills, across North America and Europe. Mr. Bahrami says data centres are also a growing market. The Canada Energy Regulator expects electricity demand from data centres to climb sharply in the coming years as artificial intelligence and cloud computing drive new growth in the sector. According to the Independent Electricity System Operator, Ontario’s electricity demand is now expected to grow by 75 per cent by 2050 – higher than earlier forecasts – with annual consumption projected to climb from 151 terawatt-hours (TWh) in 2025 to 263 TWh. Data centres alone represent 13 per cent of new electricity demand. Hydro-Québec forecasts a similar trend, with demand from data centres expected to grow by 4.1 TWh between 2023 and 2032. “It’s a double-edged sword,” Mr. Bahrami says. “AI is making energy a hot commodity, and it’s increasing prices and putting pressure on grids, but it’s also one of the saviours of how we’re going to get through this challenge.” Mr. Bahrami says decarbonization and electrification are closely linked. “We have customers that are in the food processing space where they usually use gas furnaces, and they’re going electric because they want to make sure that they can put those sustainability goals on their packaging,” he says. “Now you have this industrial facility that was using, let’s say, one megawatt and natural gas, using three megawatts and no natural gas.” To Mr. Bahrami, AI-powered efficiency is the solution. “All the optimizations that we need, all the efficiency improvements, all the analysis – this stuff is getting very complicated and it’s turning into real-time optimization,” he says. “You can’t do that without AI and machine learning.”",
+    "domain": "theglobeandmail.com",
+    "domain_category": "journalism, news and media",
+    "language": "English",
+    "date_publish": "20251028T124500Z",
+    "date_download": "2025-10-28T13:05:54.522764+00:00",
+    "authors": [],
+    "description": "",
+    "image": "",
+    "source": "theglobeandmail.com",
+    "sourcecountry": "Canada",
+    "gdelt_id": "https://www.theglobeandmail.com/business/article-canadian-businesses-turn-to-ai-to-cut-energy-use-and-emissions/",
+    "extraction_method": "basic_text_extraction",
+    "fetch_source": "gdelt",
+    "gdelt_metadata": true,
+    "content_hash": "4655c1dad4f7e06a43eccc09d35720e6",
+    "processed_at": "2025-10-28T14:08:53.114719",
+    "ai_topic_analysis": {
+      "is_ai_topic": true,
+      "confidence": 0.95,
+      "topic": "AI Business and Industry",
+      "explanation": "OpenAI: The article discusses various applications of AI in energy management and efficiency, highlighting how businesses are leveraging AI technologies to reduce energy consumption and emissions. It provides specific examples of companies using AI-driven systems, indicating a strong focus on AI in a business context.",
+      "keywords": [
+        "AI",
+        "artificial intelligence",
+        "energy management",
+        "HVAC",
+        "optimization",
+        "machine learning",
+        "data analysis"
+      ]
+    }
+  },
+  {
+    "url": "https://www.theglobeandmail.com/business/article-ups-third-quarter-results-upbeat-revenue-forecast/",
+    "title": "UPS forecasts upbeat revenue , counting on price increases to offset soft demand",
+    "text": "United Parcel Service beat analysts’ estimates for third-quarter profit and forecast revenue above Wall Street expectations for the holiday season on Tuesday, banking on price increases to offset soft business-to-business demand in the U.S. Shares of the company jumped 16 per cent in premarket trading, with rival FedEx also gaining 4 per cent. UPS shares are down about 28 per cent since the start of the year. The forecast and the profit beat signal early progress in UPS’ efforts to rebuild margins and stabilize volumes after a bruising year marked by tariff-related volume slump, the end of “de minimis” exemptions and rising costs. The world’s biggest parcel delivery firm is now leaning on rate hikes, cost cuts and a sharper focus on high-margin shipments to steady its business ahead of the crucial holiday season. The company is also reducing the number of packages it delivers for its top customer, Amazon.com, to boost its profit margins. The peak holiday shipping and return season, when UPS daily average volumes can double, spans from November to the end of January. The company projected revenue to be about US$24-billion for the fourth quarter. Analysts on average were expecting quarterly revenue of US$23.8-billion, according to data compiled by LSEG. UPS reported an adjusted profit of US$1.74 per share for the three months ended September 30, beating analysts’ average expectations of US$1.30. The Atlanta-based company reported consolidated revenue of US$21.41-billion, above expectations of US$20.83-billion.",
+    "domain": "theglobeandmail.com",
+    "domain_category": "journalism, news and media",
+    "language": "English",
+    "date_publish": "20251028T124500Z",
+    "date_download": "2025-10-28T13:05:55.089199+00:00",
+    "authors": [],
+    "description": "",
+    "image": "",
+    "source": "theglobeandmail.com",
+    "sourcecountry": "Canada",
+    "gdelt_id": "https://www.theglobeandmail.com/business/article-ups-third-quarter-results-upbeat-revenue-forecast/",
+    "extraction_method": "basic_text_extraction",
+    "fetch_source": "gdelt",
+    "gdelt_metadata": true,
+    "content_hash": "b00a5499e49ac358d4b8f0f1aaaab5d6",
+    "processed_at": "2025-10-28T14:08:53.114753",
+    "ai_topic_analysis": {
+      "is_ai_topic": false,
+      "confidence": 0.95,
+      "topic": null,
+      "explanation": "OpenAI: The article discusses UPS's financial performance and strategies for revenue generation, with no mention of artificial intelligence or related technologies.",
+      "keywords": []
+    }
+  }
+]

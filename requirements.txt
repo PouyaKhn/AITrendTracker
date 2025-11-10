@@ -1,27 +1,25 @@
-# Core news scraping
-news-please>=1.5.35
-
-# Task scheduling
 schedule>=1.2.0
-
-# Progress bars and utilities
 tqdm>=4.66.0
-
-# HTTP requests (news-please dependency)
 requests>=2.31.0
-
-# AWS SDK for cloud storage
 boto3>=1.34.0
-
-# Date/time utilities
 python-dateutil>=2.8.0
-
-# Enhanced logging (optional)
 loguru>=0.7.0
-
-# Testing framework (optional)
 pytest>=7.4.0
 pytest-cov>=4.1.0
-
-# Additional utilities
 python-dotenv>=1.0.0  # For environment variable management
+pandas>=2.3.0  # Data manipulation and analysis
+gdeltdoc>=1.12.0  # GDELT Project data access library
+newspaper3k>=0.2.8  # Advanced news article parsing and extraction
+readability-lxml>=0.8.1  # Content extraction based on readability algorithms
+trafilatura>=1.6.0  # Web scraping and content extraction focused on text
+goose3>=3.1.17  # Article extraction with better handling of modern websites
+transformers>=4.30.0  # Hugging Face transformers for zero-shot classification
+accelerate>=0.20.0  # For model loading optimization
+sentencepiece>=0.1.99  # For tokenization
+protobuf>=3.20.0  # For model serialization
+beautifulsoup4>=4.12.0  # HTML parsing and text extraction
+lxml>=4.9.0  # XML/HTML parser backend
+streamlit>=1.28.0  # Web application framework
+plotly>=5.17.0  # Interactive charts and graphs
+streamlit-ace>=0.1.1  # Code editor component
+# feedparser removed - using GDELT only
