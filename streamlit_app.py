@@ -1820,13 +1820,21 @@ def main():
                                     danish_summaries_file.unlink()
                                     deleted_files += 1
                                 
-                                # Clear ALL Streamlit caches (data, resource, and memo)
+                                # Clear ALL Streamlit caches (data and resource)
                                 # This clears all cached data including all @st.cache_data functions
-                                st.cache_data.clear()
-                                if hasattr(st, 'cache_resource'):
-                                    st.cache_resource.clear()
-                                if hasattr(st, 'cache'):
-                                    st.cache.clear()
+                                try:
+                                    st.cache_data.clear()
+                                except Exception as cache_error:
+                                    print(f"Warning: Could not clear cache_data: {cache_error}")
+                                
+                                try:
+                                    if hasattr(st, 'cache_resource'):
+                                        st.cache_resource.clear()
+                                except Exception as cache_error:
+                                    print(f"Warning: Could not clear cache_resource: {cache_error}")
+                                
+                                # Note: st.cache is deprecated and doesn't have a .clear() method
+                                # Only st.cache_data and st.cache_resource have .clear() methods
                                 
                                 # Set session state to force refresh
                                 st.session_state['db_cleared'] = True
