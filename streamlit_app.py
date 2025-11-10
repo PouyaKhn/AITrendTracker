@@ -1626,16 +1626,15 @@ def main():
             env = os.environ.copy()
             env['MAX_ARTICLES'] = '0'
             
-            # Ensure .env file is loaded - explicitly load it to get API keys
-            from dotenv import load_dotenv
+            # Ensure .env file is loaded - read it directly and add to subprocess environment
+            from dotenv import dotenv_values
             env_file = Path(__file__).parent / '.env'
             if env_file.exists():
-                # Load .env file and add to environment
-                load_dotenv(env_file, override=False)
-                # Copy any newly loaded env vars to the subprocess environment
-                for key in ['OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'FETCH_INTERVAL', 'LOG_LEVEL', 'STORAGE_DIR', 'ADMIN_USERNAME', 'ADMIN_PASSWORD']:
-                    value = os.getenv(key)
-                    if value:
+                # Read .env file directly and add all values to subprocess environment
+                env_vars = dotenv_values(env_file)
+                for key, value in env_vars.items():
+                    # Add all values, including empty ones (they might be needed for validation)
+                    if value is not None:  # None means key doesn't exist, empty string is valid
                         env[key] = value
                                                                         
             # Don't redirect stdout/stderr so pipeline logs appear in terminal
