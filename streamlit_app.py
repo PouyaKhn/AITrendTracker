@@ -1755,11 +1755,19 @@ def main():
                                     st.error("❌ Force stop also failed")
         
         with col3:
+            # Initialize session state for clear database confirmation
+            if 'show_clear_confirm' not in st.session_state:
+                st.session_state['show_clear_confirm'] = False
+            
             if st.button(f"🗑️ {t('clear_database')}", 
                         type="secondary", 
                         width='stretch',
                         help="⚠️ WARNING: This will permanently delete all articles, statistics, and history"):
-                                         
+                st.session_state['show_clear_confirm'] = True
+                st.rerun()
+            
+            # Show confirmation UI if requested
+            if st.session_state.get('show_clear_confirm', False):
                 st.warning("⚠️ **DANGER ZONE** ⚠️")
                 st.error("This action will permanently delete ALL data:")
                 st.write("• All articles from the database")
@@ -1767,10 +1775,10 @@ def main():
                 st.write("• All processing history")
                 st.write("• All AI classifications")
                 
-                                      
                 confirm_col1, confirm_col2 = st.columns(2)
                 with confirm_col1:
                     if st.button(f"✅ {t('confirm_clear')}", type="primary", width='stretch'):
+                        st.session_state['show_clear_confirm'] = False
                         with st.spinner("Clearing database..."):
                             try:
                                 db = get_database()
@@ -1847,9 +1855,11 @@ def main():
                                 error_details = traceback.format_exc()
                                 st.error(f"❌ Failed to clear database: {str(e)}")
                                 st.code(error_details, language="python")
+                                print(f"Database clear error: {error_details}")  # Log to console
                 
                 with confirm_col2:
                     if st.button(f"❌ {t('cancel')}", type="secondary", width='stretch'):
+                        st.session_state['show_clear_confirm'] = False
                         st.rerun()
     else:
                                              
