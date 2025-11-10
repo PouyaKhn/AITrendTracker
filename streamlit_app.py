@@ -1773,29 +1773,37 @@ def main():
                     if st.button(f"✅ {t('confirm_clear')}", type="primary", use_container_width=True):
                         with st.spinner("Clearing database..."):
                             try:
-                                                
                                 db = get_database()
+                                
+                                # Get the data directory from the database path
+                                data_dir = db.db_path.parent.resolve()
+                                
+                                # Clear database first
                                 db.clear_all_data()
                                 
-                                                  
-                                import shutil
-                                data_dir = Path("data")
+                                # Delete JSON files
                                 json_files = list(data_dir.glob("articles_*.json"))
                                 metadata_files = list(data_dir.glob("metadata_*.json"))
                                 
+                                deleted_files = 0
                                 for file in json_files + metadata_files:
                                     if file.exists():
                                         file.unlink()
+                                        deleted_files += 1
                                 
-                                             
+                                # Clear Streamlit cache
                                 st.cache_data.clear()
                                 
-                                st.success("🗑️ Database cleared successfully!")
+                                st.success(f"🗑️ Database cleared successfully! Deleted {deleted_files} JSON files.")
                                 st.info("All articles, statistics, and history have been permanently deleted.")
+                                time.sleep(1)
                                 st.rerun()
                                 
                             except Exception as e:
+                                import traceback
+                                error_details = traceback.format_exc()
                                 st.error(f"❌ Failed to clear database: {str(e)}")
+                                st.code(error_details, language="python")
                 
                 with confirm_col2:
                     if st.button(f"❌ {t('cancel')}", type="secondary", use_container_width=True):
