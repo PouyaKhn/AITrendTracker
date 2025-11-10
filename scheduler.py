@@ -5,139 +5,124 @@ Task scheduling functionality for automated news scraping.
 import schedule
 import time
 import threading
+import signal
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Callable
 
-from config import Config
+from config import load_config
 from logger import get_logger
 
+                   
+logger = get_logger(__name__)
 
-class NewsScheduler:
-    """Scheduler for automated news scraping tasks."""
+                                                  
+FETCH_INTERVAL = load_config().fetch_interval_minutes
+
+                                   
+_shutdown_requested = False
+
+
+def run_batch():
+    """Default batch job function that can be overridden."""
+    logger.info("Running default batch job")
+                                                                                       
+
+
+def _signal_handler(signum, frame):
+    """Handle shutdown signals gracefully."""
+    global _shutdown_requested
+    logger.info(f"Received signal {signum}, initiating graceful shutdown")
+    _shutdown_requested = True
+
+
+def start_scheduler(job_fn: Callable = None):
+    """
+    Start the scheduler that blocks and repeatedly calls job_fn.
     
-    def __init__(self, scraper, config: Config):
-        """
-        Initialize the scheduler.
-        
-        Args:
-            scraper: NewsScraper instance
-            config: Configuration object
-        """
-        self.scraper = scraper
-        self.config = config
-        self.logger = get_logger(__name__)
-        self.running = False
-        self.scheduler_thread: Optional[threading.Thread] = None
-        
-    def scheduled_scrape_job(self):
-        """Job function that runs the scraping process."""
+    Args:
+        job_fn: Function to be called on each scheduled interval.
+                If None, uses the default run_batch function.
+    
+    Features:
+    - Uses schedule.every(FETCH_INTERVAL).minutes.do(job_fn)
+    - Blocks and repeatedly calls job_fn
+    - Provides graceful shutdown on KeyboardInterrupt
+    - Re-registers jobs on failure
+    """
+    global _shutdown_requested
+    
+                                           
+    config = load_config()
+    fetch_interval = config.fetch_interval_minutes
+    
+                                          
+    if job_fn is None:
+        job_fn = run_batch
+    
+                                                                              
+    def unlimited_job_wrapper():
+        """Wrapper that ensures MAX_ARTICLES=0 for each job execution."""
+        import os
+        os.environ['MAX_ARTICLES'] = '0'                         
+        logger.info("🔄 Ensuring unlimited mode for scheduled job execution")
+        return job_fn()
+    
+                                                  
+    signal.signal(signal.SIGINT, _signal_handler)
+    signal.signal(signal.SIGTERM, _signal_handler)
+    
+                                                      
+    logger.info(f"FETCH_INTERVAL environment variable: {fetch_interval} minutes")
+    if fetch_interval >= 60:
+        hours = fetch_interval / 60
+        logger.info(f"Starting scheduler with {hours:.1f} hour intervals")
+    else:
+        logger.info(f"Starting scheduler with {fetch_interval} minute intervals")
+    
+    def register_job():
+        """Register the job with the scheduler."""
+        schedule.clear()                           
+        schedule.every(fetch_interval).minutes.do(unlimited_job_wrapper)
+        logger.info(f"Job registered to run every {fetch_interval} minutes")
+    
+                              
+    register_job()
+    
+                                  
+    try:
+        logger.info("Running initial job execution")
+        unlimited_job_wrapper()
+    except Exception as e:
+        logger.error(f"Error in initial job execution: {e}")
+    
+                         
+    while not _shutdown_requested:
         try:
-            self.logger.info("Starting scheduled scraping job")
-            start_time = datetime.now()
+                                        
+            schedule.run_pending()
+            time.sleep(1)                      
             
-            # Run the scraping
-            results = self.scraper.scrape_all_sources()
-            
-            # Count total articles
-            total_articles = sum(len(articles) for articles in results.values())
-            
-            # Clean up old data
-            self.scraper.cleanup_old_data()
-            
-            duration = datetime.now() - start_time
-            self.logger.info(f"Scheduled scraping job completed. "
-                           f"Articles scraped: {total_articles}, Duration: {duration}")
+        except KeyboardInterrupt:
+            logger.info("KeyboardInterrupt received, initiating graceful shutdown")
+            _shutdown_requested = True
+            break
             
         except Exception as e:
-            self.logger.error(f"Error in scheduled scraping job: {e}")
-    
-    def setup_schedule(self):
-        """Set up the scraping schedule."""
-        # Schedule scraping job
-        schedule.every(self.config.scrape_interval_minutes).minutes.do(self.scheduled_scrape_job)
-        
-        # Schedule daily cleanup job at 2 AM
-        schedule.every().day.at("02:00").do(self.scraper.cleanup_old_data)
-        
-        self.logger.info(f"Scheduled scraping every {self.config.scrape_interval_minutes} minutes")
-        self.logger.info("Scheduled daily cleanup at 02:00")
-    
-    def run_scheduler(self):
-        """Run the scheduler in a loop."""
-        self.logger.info("Starting scheduler thread")
-        
-        while self.running:
+            logger.error(f"Error in scheduler loop: {e}")
+            logger.info("Re-registering job after failure")
+            
             try:
-                schedule.run_pending()
-                time.sleep(1)  # Check every second
-                
-            except Exception as e:
-                self.logger.error(f"Error in scheduler loop: {e}")
-                time.sleep(60)  # Wait a minute before retrying
+                                                
+                register_job()
+                logger.info("Job re-registered successfully")
+            except Exception as reg_error:
+                logger.error(f"Failed to re-register job: {reg_error}")
+            
+                                  
+            time.sleep(60)
     
-    def start(self):
-        """Start the scheduler."""
-        if self.running:
-            self.logger.warning("Scheduler is already running")
-            return
-        
-        self.logger.info("Starting news scraping scheduler")
-        
-        # Set up the schedule
-        self.setup_schedule()
-        
-        # Run initial scraping job
-        self.logger.info("Running initial scraping job")
-        self.scheduled_scrape_job()
-        
-        # Start the scheduler thread
-        self.running = True
-        self.scheduler_thread = threading.Thread(target=self.run_scheduler, daemon=True)
-        self.scheduler_thread.start()
-        
-        self.logger.info("News scraping scheduler started successfully")
-    
-    def stop(self):
-        """Stop the scheduler."""
-        if not self.running:
-            self.logger.warning("Scheduler is not running")
-            return
-        
-        self.logger.info("Stopping news scraping scheduler")
-        self.running = False
-        
-        # Clear all scheduled jobs
-        schedule.clear()
-        
-        # Wait for scheduler thread to finish
-        if self.scheduler_thread and self.scheduler_thread.is_alive():
-            self.scheduler_thread.join(timeout=5)
-        
-        self.logger.info("News scraping scheduler stopped")
-    
-    def get_next_run_time(self) -> Optional[datetime]:
-        """Get the next scheduled run time."""
-        try:
-            next_run = schedule.next_run()
-            return next_run
-        except Exception:
-            return None
-    
-    def get_status(self) -> dict:
-        """Get scheduler status information."""
-        return {
-            'running': self.running,
-            'next_run': self.get_next_run_time(),
-            'jobs_count': len(schedule.jobs),
-            'scrape_interval_minutes': self.config.scrape_interval_minutes,
-        }
-    
-    def run_job_now(self):
-        """Manually trigger a scraping job."""
-        self.logger.info("Manually triggering scraping job")
-        
-        # Run in a separate thread to avoid blocking
-        job_thread = threading.Thread(target=self.scheduled_scrape_job, daemon=True)
-        job_thread.start()
-        
-        return "Scraping job started manually"
+             
+    logger.info("Scheduler shutting down gracefully")
+    schedule.clear()
+    logger.info("All scheduled jobs cleared")
+

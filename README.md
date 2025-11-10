@@ -1,230 +1,207 @@
-# News Scraping Service
+# AI Trend Tracker – News Pipeline and Dashboard
 
-An automated news scraping service that uses the `news-please` library to collect articles from various news sources on a scheduled basis.
+A practical system that fetches recent news articles from GDELT, classifies AI-related content using LLM APIs (OpenAI/Anthropic), stores them in SQLite, and visualizes results in a multilingual Streamlit dashboard.
 
-## Project Structure
+## Features
 
-- `main.py` - Main application entry point
-- `config.py` - Configuration settings and environment variables
-- `scraper.py` - News scraping functionality using news-please
-- `scheduler.py` - Task scheduling for automated scraping
-- `data_handler.py` - Data storage and management
-- `utils.py` - Utility functions for the application
-- `logger.py` - Logging configuration (supports both loguru and standard logging)
-- `requirements.txt` - Project dependencies
+- **GDELT Integration**: Fetches worldwide news articles from the past 2 hours (unlimited mode)
+- **Robust Text Extraction**: Multi-library approach (Trafilatura, Goose3, Newspaper3k, Readability-lxml, BeautifulSoup)
+- **AI Classification**: API-based LLM classification using OpenAI GPT-4o-mini or Anthropic Claude 3.5 Haiku
+- **SQLite Storage**: Efficient local database with deduplication and analytics
+- **Streamlit Dashboard**: Interactive web interface with:
+  - Pipeline start/stop controls
+  - Live statistics and metrics
+  - Paginated AI article browser
+  - Interactive trend charts (hourly, daily, weekly, monthly, yearly)
+  - Multilingual support (English/Danish)
+- **Domain Failure Tracking**: Persistent blacklisting of problematic domains
+- **Comprehensive Logging**: Rotating log files with detailed execution tracking
 
-## Dependencies
+## Quick Start
 
-### Core Dependencies
-- `news-please` - News article extraction library
-- `schedule` - Task scheduling library
-- `tqdm` - Progress bars for scraping operations
-- `requests` - HTTP library (news-please dependency)
-- `boto3` - AWS SDK for cloud storage
-- `python-dateutil` - Date/time utilities
-
-### Optional Dependencies
-- `loguru` - Enhanced logging (falls back to standard logging if not available)
-- `pytest` - Testing framework
-- `python-dotenv` - Environment variable management
-
-## Installation
-
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd Secondment
-   ```
-
-2. **Virtual Environment Setup** (Recommended):
-   
-   Create a fresh virtual environment:
-   ```bash
-   python3 -m venv venv
-   ```
-   
-   **Activate the virtual environment:**
-   
-   **Linux/macOS (bash/zsh):**
-   ```bash
-   source venv/bin/activate
-   ```
-   
-   **Windows (Command Prompt):**
-   ```cmd
-   venv\Scripts\activate.bat
-   ```
-   
-   **Windows (PowerShell):**
-   ```powershell
-   venv\Scripts\Activate.ps1
-   ```
-   
-   **Fish Shell:**
-   ```fish
-   source venv/bin/activate.fish
-   ```
-   
-   **C Shell (csh/tcsh):**
-   ```csh
-   source venv/bin/activate.csh
-   ```
-   
-   **Note:** You can verify the virtual environment is active by checking that `(venv)` appears at the beginning of your command prompt, or by running:
-   ```bash
-   echo $VIRTUAL_ENV  # Linux/macOS
-   echo %VIRTUAL_ENV%  # Windows Command Prompt
-   echo $env:VIRTUAL_ENV  # Windows PowerShell
-   ```
-
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-   
-   **Verified Dependencies:** All packages install successfully without import errors on Python 3.13+
-
-4. **Quick Setup Script**: For automated setup, you can use the provided script:
-   ```bash
-   ./dev_setup.sh
-   ```
-
-## Configuration
-
-The application can be configured through environment variables:
-
-- `SCRAPE_INTERVAL` - Scraping interval in minutes (default: 60)
-- `MAX_ARTICLES` - Maximum articles per source (default: 50)
-- `REQUEST_TIMEOUT` - HTTP request timeout in seconds (default: 30)
-- `OUTPUT_FORMAT` - Data output format: json, csv, parquet (default: json)
-- `DATA_RETENTION_DAYS` - Data retention period in days (default: 30)
-- `LOG_LEVEL` - Logging level: DEBUG, INFO, WARNING, ERROR (default: INFO)
-- `AWS_REGION` - AWS region for S3 storage (default: us-east-1)
-- `S3_BUCKET` - S3 bucket name for data storage
-- `S3_PREFIX` - S3 key prefix (default: news-data/)
-
-## Usage
-
-The news scraping pipeline supports two modes of operation:
-
-### Continuous Mode (Default)
-
-Run the continuous pipeline with 30-minute intervals:
+### 1. Setup Environment
 
 ```bash
-python main.py
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
-This mode will:
-1. Start the scheduler with automatic 30-minute intervals
-2. Run an initial pipeline batch immediately
-3. Continue running batches every 30 minutes
-4. Log all activities to both console and rotating log files
-5. Handle graceful shutdown on SIGINT/SIGTERM
+### 2. Configure Environment Variables
 
-### Single Batch Verification Mode
+Create a `.env` file or set environment variables:
 
-Run a single batch for testing and verification:
+```bash
+export OPENAI_API_KEY=your_openai_key
+export ANTHROPIC_API_KEY=your_anthropic_key
+export FETCH_INTERVAL=120          # minutes between runs (default: 120)
+export MAX_ARTICLES=0              # 0 = unlimited mode (default)
+export LOG_LEVEL=INFO              # DEBUG, INFO, WARNING, ERROR
+export STORAGE_DIR=./data          # data storage directory
+```
+
+### 3. Run the Dashboard
+
+```bash
+source venv/bin/activate
+streamlit run streamlit_app.py --server.port 8501
+```
+
+Open `http://localhost:8501` in your browser.
+
+### 4. Use the Dashboard
+
+- **START**: Runs the pipeline in the background as a separate process
+- **STOP**: Terminates the running pipeline
+- **Refresh Stats**: Manually update statistics (auto-refreshes every 5 minutes)
+- **Language Selection**: Switch between English and Danish interface
+
+### Dashboard Features
+
+- **Live Statistics**: Total articles, AI articles, processing rates, success rates
+- **AI Article Browser**: Paginated list (10 per page) with expandable details
+- **Interactive Charts**:
+  - AI Topics Distribution (bar chart)
+  - Articles by Domain Category (bar chart)
+  - Trend Analysis (line charts):
+    - Hourly: Today (00-23)
+    - Daily: Current week (Mon-Sun)
+    - Weekly: Weeks 1-4 of current month
+    - Monthly: January-December of current year
+    - Yearly: From 2025 onward
+
+## Command Line Interface
+
+### Single Batch Mode
+
+Run a single pipeline batch without the dashboard:
 
 ```bash
 python main.py --once
 ```
 
-This mode will:
-1. Execute `verification.test_single_batch()` once
-2. Verify that articles are properly fetched, processed, and stored
-3. Display comprehensive verification results
-4. Exit after completion
+This fetches, processes, classifies, and stores one batch, then exits.
 
-### CLI Options
+### Continuous Mode
+
+Run the pipeline continuously with scheduled intervals:
 
 ```bash
-python main.py [options]
-
-Options:
-  --once        Run single batch verification test instead of continuous mode
-  --version     Show version information
-  --help        Show help message and usage examples
-```
-
-### Environment Variables
-
-Customize the pipeline behavior using environment variables:
-
-```bash
-# Set fetch interval (default: 30 minutes)
-export FETCH_INTERVAL=30
-
-# Set storage directory (default: ./data)
-export STORAGE_DIR=/path/to/storage
-
-# Set log file path (default: ./logs/news_scraper.log)
-export LOG_PATH=/path/to/logfile.log
-
-# Set logging level (default: INFO)
-export LOG_LEVEL=DEBUG
-
-# Set maximum articles to process (default: 100)
-export MAX_ARTICLES=50
-
-# Run the pipeline
 python main.py
 ```
 
-### Examples
+The pipeline runs every 2 hours (configurable via `FETCH_INTERVAL`).
 
-```bash
-# Run continuous pipeline with default settings
-python main.py
+## Architecture
 
-# Run single verification test
-python main.py --once
+### Core Modules
 
-# Run with custom fetch interval (60 minutes)
-FETCH_INTERVAL=60 python main.py
+- **`fetcher.py`**: GDELT API integration, text extraction, domain filtering, duplicate removal
+- **`processor.py`**: Article validation, encoding normalization, JSON storage
+- **`ai_classifier.py`**: LLM API integration (OpenAI/Anthropic) for AI topic classification
+- **`pipeline.py`**: Main orchestration (fetch → process → classify → store → database)
+- **`database.py`**: SQLite schema, queries, and analytics
+- **`scheduler.py`**: Background scheduling for continuous operation
+- **`streamlit_app.py`**: Web dashboard and pipeline process management
+- **`config.py`**: Centralized configuration with environment variable support
+- **`logger.py`**: Logging setup (Loguru or standard logging)
+- **`utils.py`**: Helper functions (rate limiting, hashing, text normalization)
+- **`config/languages.py`**: Multilingual support (English/Danish translations)
 
-# Run with debug logging
-LOG_LEVEL=DEBUG python main.py --once
+### Data Flow
+
+```
+GDELT API → Fetcher → Processor → AI Classifier → Database → Dashboard
+    ↓           ↓         ↓           ↓            ↓         ↓
+  Articles → Validation → LLM API → SQLite → Streamlit UI
 ```
 
 ## Data Storage
 
-Scraped articles are stored in the `data/` directory in the configured format (JSON by default). Each article includes:
+### File Structure
 
-- URL and title
-- Full text content
-- Publication and download dates
-- Authors and language
-- Source domain
-- Description and image URL
-- Metadata timestamps
+```
+data/
+├── processed_articles.db          # SQLite database
+├── articles_YYYYMMDD_HHMMSS.json  # Processed articles (JSON)
+├── metadata_YYYYMMDD_HHMMSS.json  # Article metadata
+└── rejected_articles_*.json       # Failed articles
 
-## Logging
+logs/
+└── news_scraper.log              # Main log file (rotating)
+```
 
-The application supports both enhanced logging with `loguru` and standard Python logging. Logs include:
+## AI Topic Categories
 
-- Scraping progress and statistics
-- Error handling and debugging information
-- File rotation and compression (with loguru)
-- Console and file output
+The system classifies articles into 14 AI topic categories:
 
-## Git Repository
+- AI Research and Development
+- AI Ethics and Regulations
+- AI Safety and Governance
+- AI Business and Industry
+- AI Language Models and NLP
+- AI Robotics and Automation
+- AI Healthcare and Medical
+- AI Education and Training
+- AI Cybersecurity and Privacy
+- AI Computer Vision
+- AI Data Science and Analytics
+- AI Neural Networks and Deep Learning
+- AI Applications and Deployment
+- AI Technology and Infrastructure
 
-The project is initialized as a Git repository with:
-- Proper `.gitignore` for Python projects
-- Initial commit with all core files
-- Exclusion of data/, logs/, and temporary files
+## Troubleshooting
 
-## Development
+### Port Already in Use
 
-To contribute to this project:
+```bash
+streamlit run streamlit_app.py --server.port 8502
+```
 
-1. Create a feature branch
-2. Make your changes
-3. Add tests for new functionality
-4. Run the test suite: `pytest`
-5. Submit a pull request
+### Missing Dependencies
+
+```bash
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### Missing API Keys
+
+Set `OPENAI_API_KEY` and/or `ANTHROPIC_API_KEY` environment variables. The system will use keyword-based fallback if APIs are unavailable.
+
+### No New Articles
+
+GDELT may have limited articles in the current 2-hour window. The system fetches from the past 2 hours only (minimum GDELT timespan). Try again later or check logs for domain failures.
+
+### Database Issues
+
+```bash
+# Check database
+sqlite3 data/processed_articles.db "SELECT COUNT(*) FROM processed_articles;"
+
+# View recent articles
+sqlite3 data/processed_articles.db "SELECT title, domain, processed_at FROM processed_articles ORDER BY processed_at DESC LIMIT 10;"
+```
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `OPENAI_API_KEY` | OpenAI API key for classification | None |
+| `ANTHROPIC_API_KEY` | Anthropic API key for classification | None |
+| `FETCH_INTERVAL` | Minutes between pipeline runs | 120 |
+| `MAX_ARTICLES` | Maximum articles per batch (0 = unlimited) | 0 |
+| `LOG_LEVEL` | Logging verbosity (DEBUG, INFO, WARNING, ERROR) | INFO |
+| `STORAGE_DIR` | Data storage directory | ./data |
+| `LOG_PATH` | Log file path | ./logs/news_scraper.log |
+
+## Requirements
+
+- Python 3.8+
+- 2GB+ RAM recommended
+- Internet connection for GDELT and LLM APIs
+- 10GB+ disk space for data and logs
 
 ## License
 
-[Add license information here]
+MIT

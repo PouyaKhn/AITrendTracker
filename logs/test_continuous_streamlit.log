@@ -1,0 +1,32 @@
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:27 - 🧪 Testing Continuous Pipeline Manager
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:28 - ==================================================
+2025-10-19 21:26:46 | INFO     | database:_init_database:145 - Database initialized: data/processed_articles.db
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:34 - 📊 Initial Status:
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:36 -   Status: stopped
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:37 -   Running: False
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:38 -   Paused: False
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:41 - 📈 Live Stats:
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:43 -   Total Articles: 111
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:44 -   AI Topics: 9
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:45 -   Status: stopped
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:48 - 📰 Recent AI Articles:
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:50 -   Found 5 recent AI articles
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:53 -   1. Microsoft new Security Store is like an app store for cybers...
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:54 -      Domain: theverge.com
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:55 -      Processed: 2025-09-30T15:33:05.552203+00:00
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:53 -   2. Amazon event live blog : were here for new Echos , Kindles a...
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:54 -      Domain: theverge.com
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:55 -      Processed: 2025-09-30T15:33:05.509677+00:00
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:53 -   3. Nothing  first step  to an  AI O is not first , or an OS , b...
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:54 -      Domain: theverge.com
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:55 -      Processed: 2025-09-30T15:33:05.461634+00:00
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:57 - ✅ Continuous Pipeline Manager test completed successfully!
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:58 - 
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:59 - 🚀 To test the full Streamlit app with continuous mode:
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:60 -    streamlit run streamlit_app.py
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:61 - 
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:62 - 🎛️ In the Streamlit app, you can:
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:63 -    - Click 'START' to begin continuous processing
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:64 -    - Click 'PAUSE' to pause processing
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:65 -    - Click 'STOP' to stop completely
+2025-10-19 21:26:46 | INFO     | __main__:test_continuous_pipeline_manager:66 -    - View live statistics and recent articles

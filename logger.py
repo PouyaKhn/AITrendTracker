@@ -34,10 +34,10 @@ def setup_logger(log_level: str = "INFO", log_file: Optional[str] = None) -> log
 
 def setup_loguru_logger(log_level: str = "INFO", log_file: Optional[str] = None):
     """Set up loguru logger."""
-    # Remove default handler
+                            
     loguru_logger.remove()
     
-    # Console handler
+                     
     loguru_logger.add(
         sys.stderr,
         level=log_level,
@@ -48,7 +48,7 @@ def setup_loguru_logger(log_level: str = "INFO", log_file: Optional[str] = None)
         colorize=True
     )
     
-    # File handler
+                  
     if log_file:
         log_path = Path(log_file)
         log_path.parent.mkdir(exist_ok=True)
@@ -67,33 +67,33 @@ def setup_loguru_logger(log_level: str = "INFO", log_file: Optional[str] = None)
 
 def setup_standard_logger(log_level: str = "INFO", log_file: Optional[str] = None) -> logging.Logger:
     """Set up standard Python logger."""
-    # Create logger
+                   
     logger = logging.getLogger("news_scraper")
     logger.setLevel(getattr(logging, log_level.upper()))
     
-    # Clear existing handlers
+                             
     logger.handlers.clear()
     
-    # Create formatter
+                      
     formatter = logging.Formatter(
         '%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
     
-    # Console handler
+                     
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(getattr(logging, log_level.upper()))
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
     
-    # File handler
+                  
     if log_file:
         log_path = Path(log_file)
         log_path.parent.mkdir(exist_ok=True)
         
         file_handler = logging.handlers.RotatingFileHandler(
             log_file,
-            maxBytes=10*1024*1024,  # 10MB
+            maxBytes=10*1024*1024,        
             backupCount=5
         )
         file_handler.setLevel(getattr(logging, log_level.upper()))
@@ -121,5 +121,5 @@ def get_logger(name: str = None):
         return logging.getLogger(name or "news_scraper")
 
 
-# Configure root logger
+                       
 root_logger = setup_logger()

@@ -1,0 +1,13 @@
+{
+  "total_articles_processed": 213,
+  "ai_topics_detected": 11,
+  "articles_fetched": 222,
+  "articles_stored": 82,
+  "articles_rejected": 0,
+  "processing_time": 74.962992,
+  "last_update": "2025-10-20T11:19:13.587784",
+  "status": "running",
+  "error_message": "",
+  "current_run_id": null,
+  "start_time": "2025-10-20T11:22:44.019025"
+}
