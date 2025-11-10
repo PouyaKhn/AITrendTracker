@@ -1636,12 +1636,14 @@ def main():
             env = os.environ.copy()
             env['MAX_ARTICLES'] = '0'                  
                                                                         
+            # Don't redirect stdout/stderr so pipeline logs appear in terminal
+            # Logs will also be written to the log file configured in config.py
             proc = subprocess.Popen(
                 [sys.executable, 'main.py'],
                 cwd=Path(__file__).parent,
                 env=env,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                # stdout and stderr are None by default, which means they inherit from parent
+                # This allows logs to appear in the Streamlit terminal
             )
             pid_file.parent.mkdir(parents=True, exist_ok=True)
             pid_file.write_text(str(proc.pid))
