@@ -1203,7 +1203,7 @@ def admin_login_page():
                 elif username == admin_username and password == admin_password:
                     st.session_state.admin_logged_in = True
                     st.session_state.show_login = False                    
-                    st.success("✅ Login successful! Redirecting to main page...")
+                    st.success(f"✅ {t('login_successful')}")
                     time.sleep(1)
                     st.rerun()
                 else:
@@ -1708,13 +1708,13 @@ def main():
     if st.session_state.admin_logged_in:
                                
         if status['status'] == 'running':
-            st.success(f"🟢 {t('pipeline_running')} - Processing articles every 2 hours")
-            st.info("💡 Use refresh buttons below to see live updates")
+            st.success(f"🟢 {t('pipeline_running_with_interval')}")
+            st.info(f"💡 {t('use_refresh_buttons')}")
             
         elif status['status'] == 'error':
-            st.error(f"🔴 Pipeline ERROR - {status.get('error_message', 'Unknown error')}")
+            st.error(f"🔴 {t('pipeline_error')} - {status.get('error_message', t('unknown_error'))}")
         else:
-            st.info(f"⚪ {t('pipeline_stopped')} - Click Start to begin")
+            st.info(f"⚪ {t('pipeline_stopped_click_start')}")
         
                                                
         col1, col2, col3 = st.columns(3)
@@ -1863,9 +1863,9 @@ def main():
     else:
                                              
         if status['status'] == 'running':
-            st.success("🟢 Pipeline is RUNNING - Processing articles every 2 hours")
+            st.success(f"🟢 {t('pipeline_running_with_interval')}")
         elif status['status'] == 'error':
-            st.error(f"🔴 Pipeline ERROR - {status.get('error_message', 'Unknown error')}")
+            st.error(f"🔴 {t('pipeline_error')} - {status.get('error_message', t('unknown_error'))}")
     
                         
     st.markdown("---")
@@ -2173,7 +2173,7 @@ def main():
 
                                                     
     else:
-        st.info("No AI-related articles found yet. Run the pipeline to fetch and analyze articles.")
+        st.info(t('no_ai_articles_found'))
     
                     
     st.markdown("---")
@@ -2215,7 +2215,7 @@ def main():
         
         st.plotly_chart(fig_topics, width='stretch')
     else:
-        st.info("No AI topics data available yet. Run the pipeline to collect AI articles.")
+        st.info(t('no_ai_topics_data'))
     
                                         
     st.subheader(t('articles_by_domain'))
@@ -2253,7 +2253,7 @@ def main():
         
         st.plotly_chart(fig_categories, width='stretch')
     else:
-        st.info("No category data available yet. Run the pipeline to collect articles.")
+        st.info(t('no_category_data'))
     
                                  
     st.subheader(f"{t('ai_trends')}")
