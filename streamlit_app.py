@@ -33,7 +33,7 @@ load_dotenv()
                                                                  
 
                                    
-from database import get_database
+from database import get_database, reset_database_instance
 
                                
 from config.languages import LANGUAGES, get_language, set_language, t, translate_ai_topic, translate_domain_category, translate_day_name, translate_month_name, translate_week_label
@@ -1781,9 +1781,10 @@ def main():
                                 # Clear database first
                                 db.clear_all_data()
                                 
-                                # Delete JSON files
+                                # Delete all JSON files (articles, metadata, danish summaries)
                                 json_files = list(data_dir.glob("articles_*.json"))
                                 metadata_files = list(data_dir.glob("metadata_*.json"))
+                                danish_summaries_file = data_dir / "danish_summaries.json"
                                 
                                 deleted_files = 0
                                 for file in json_files + metadata_files:
@@ -1791,12 +1792,38 @@ def main():
                                         file.unlink()
                                         deleted_files += 1
                                 
-                                # Clear Streamlit cache
+                                # Delete danish summaries file
+                                if danish_summaries_file.exists():
+                                    danish_summaries_file.unlink()
+                                    deleted_files += 1
+                                
+                                # Reset database singleton to force fresh connection
+                                reset_database_instance()
+                                
+                                # Clear ALL Streamlit caches (data, resource, and memo)
                                 st.cache_data.clear()
+                                if hasattr(st, 'cache_resource'):
+                                    st.cache_resource.clear()
+                                if hasattr(st, 'cache'):
+                                    st.cache.clear()
+                                
+                                # Clear specific cached functions (if they've been called)
+                                try:
+                                    get_ai_articles_by_topic.clear()
+                                except:
+                                    pass
+                                try:
+                                    get_ai_articles_by_category.clear()
+                                except:
+                                    pass
+                                try:
+                                    get_ai_articles_trend_data.clear()
+                                except:
+                                    pass
                                 
                                 st.success(f"🗑️ Database cleared successfully! Deleted {deleted_files} JSON files.")
                                 st.info("All articles, statistics, and history have been permanently deleted.")
-                                time.sleep(1)
+                                time.sleep(2)
                                 st.rerun()
                                 
                             except Exception as e:
