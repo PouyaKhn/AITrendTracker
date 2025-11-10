@@ -1234,9 +1234,9 @@ def main():
     typeface_logo = base64.b64encode(open("images/5. typeface_#0f0f0f.png", "rb").read()).decode()
     
                            
-    current_url = "http://localhost:8501"            
-    en_link = f"{current_url}/?lang=en"
-    da_link = f"{current_url}/?lang=da"
+    # Use relative URLs to work with any domain/IP
+    en_link = "/?lang=en"
+    da_link = "/?lang=da"
     
     st.markdown(f'''
         <div class="sticky-header" id="stickyHeader">
