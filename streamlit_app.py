@@ -1190,7 +1190,13 @@ def admin_login_page():
         col1, col2, col3 = st.columns([1, 1, 1])
         with col2:
             if st.button(f"🔑 {t('login')}", type="primary", use_container_width=True):
-                if username == "admin1.CenterForAI@DMJX" and password == "admin1.CenterForAI@DMJX":
+                # Get admin credentials from environment variables
+                admin_username = os.getenv('ADMIN_USERNAME', '')
+                admin_password = os.getenv('ADMIN_PASSWORD', '')
+                
+                if not admin_username or not admin_password:
+                    st.error("❌ Admin credentials not configured. Please set ADMIN_USERNAME and ADMIN_PASSWORD environment variables.")
+                elif username == admin_username and password == admin_password:
                     st.session_state.admin_logged_in = True
                     st.session_state.show_login = False                    
                     st.success("✅ Login successful! Redirecting to main page...")
