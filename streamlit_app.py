@@ -1633,9 +1633,21 @@ def main():
                 # Read .env file directly and add all values to subprocess environment
                 env_vars = dotenv_values(env_file)
                 for key, value in env_vars.items():
-                    # Add all values, including empty ones (they might be needed for validation)
-                    if value is not None:  # None means key doesn't exist, empty string is valid
-                        env[key] = value
+                    # Add all values - strip whitespace and handle empty strings
+                    if value is not None:
+                        # Strip whitespace from values
+                        value = str(value).strip()
+                        if value:  # Only add non-empty values
+                            env[key] = value
+                
+                # Debug: Log if API keys are being passed (without showing the actual keys)
+                openai_key_present = 'OPENAI_API_KEY' in env and env.get('OPENAI_API_KEY', '').strip()
+                anthropic_key_present = 'ANTHROPIC_API_KEY' in env and env.get('ANTHROPIC_API_KEY', '').strip()
+                print(f"[Pipeline Start] Environment check - OPENAI_API_KEY: {'✓' if openai_key_present else '✗'}, ANTHROPIC_API_KEY: {'✓' if anthropic_key_present else '✗'}")
+                if not openai_key_present and not anthropic_key_present:
+                    print(f"[Pipeline Start] WARNING: No API keys found in .env file or environment!")
+            else:
+                print(f"[Pipeline Start] WARNING: .env file not found at {env_file}")
                                                                         
             # Don't redirect stdout/stderr so pipeline logs appear in terminal
             # Logs will also be written to the log file configured in config.py
