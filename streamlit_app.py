@@ -1624,7 +1624,19 @@ def main():
                 return True
             
             env = os.environ.copy()
-            env['MAX_ARTICLES'] = '0'                  
+            env['MAX_ARTICLES'] = '0'
+            
+            # Ensure .env file is loaded - explicitly load it to get API keys
+            from dotenv import load_dotenv
+            env_file = Path(__file__).parent / '.env'
+            if env_file.exists():
+                # Load .env file and add to environment
+                load_dotenv(env_file, override=False)
+                # Copy any newly loaded env vars to the subprocess environment
+                for key in ['OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'FETCH_INTERVAL', 'LOG_LEVEL', 'STORAGE_DIR', 'ADMIN_USERNAME', 'ADMIN_PASSWORD']:
+                    value = os.getenv(key)
+                    if value:
+                        env[key] = value
                                                                         
             # Don't redirect stdout/stderr so pipeline logs appear in terminal
             # Logs will also be written to the log file configured in config.py
