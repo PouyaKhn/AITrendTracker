@@ -1193,7 +1193,7 @@ def admin_login_page():
                       
         col1, col2, col3 = st.columns([1, 1, 1])
         with col2:
-            if st.button(f"🔑 {t('login')}", type="primary", use_container_width=True):
+            if st.button(f"🔑 {t('login')}", type="primary", width='stretch'):
                 # Get admin credentials from environment variables
                 admin_username = os.getenv('ADMIN_USERNAME', '')
                 admin_password = os.getenv('ADMIN_PASSWORD', '')
@@ -1211,7 +1211,7 @@ def admin_login_page():
         
                      
         with col1:
-            if st.button(f"⬅️ {t('back_to_main')}", use_container_width=True):
+            if st.button(f"⬅️ {t('back_to_main')}", width='stretch'):
                 st.session_state.show_login = False
                 st.rerun()
         
@@ -1283,7 +1283,7 @@ def main():
                             
     col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 1])
     with col_btn2:
-        if st.button(t('read_more'), use_container_width=True):
+        if st.button(t('read_more'), width='stretch'):
             st.session_state.intro_expanded = not st.session_state.intro_expanded
     
                                                                    
@@ -1718,7 +1718,7 @@ def main():
         with col1:
             if st.button(f"▶️ {t('start_button')}", 
                         type="primary", 
-                        use_container_width=True,
+                        width='stretch',
                         disabled=status['status'] == 'running'):
                 if _start_pipeline_subprocess():
                     st.success("🚀 Pipeline started! Running every 2 hours.")
@@ -1729,7 +1729,7 @@ def main():
         with col2:
             if st.button(f"⏹️ {t('stop_button')}", 
                         type="secondary", 
-                        use_container_width=True,
+                        width='stretch',
                         disabled=status['status'] == 'stopped'):
                 with st.spinner("Stopping pipeline..."):
                     stop_result = _stop_pipeline_subprocess()
@@ -1745,7 +1745,7 @@ def main():
                         st.write(f"**PID:** {_read_pid() or 'N/A'}")
                         
                                                      
-                        if st.button("🔧 Force Stop", type="secondary", use_container_width=True):
+                        if st.button("🔧 Force Stop", type="secondary", width='stretch'):
                             with st.spinner("Force stopping pipeline..."):
                                 force_result = _stop_pipeline_subprocess()
                                 if force_result:
@@ -1757,7 +1757,7 @@ def main():
         with col3:
             if st.button(f"🗑️ {t('clear_database')}", 
                         type="secondary", 
-                        use_container_width=True,
+                        width='stretch',
                         help="⚠️ WARNING: This will permanently delete all articles, statistics, and history"):
                                          
                 st.warning("⚠️ **DANGER ZONE** ⚠️")
@@ -1770,7 +1770,7 @@ def main():
                                       
                 confirm_col1, confirm_col2 = st.columns(2)
                 with confirm_col1:
-                    if st.button(f"✅ {t('confirm_clear')}", type="primary", use_container_width=True):
+                    if st.button(f"✅ {t('confirm_clear')}", type="primary", width='stretch'):
                         with st.spinner("Clearing database..."):
                             try:
                                 db = get_database()
@@ -1778,8 +1778,23 @@ def main():
                                 # Get the data directory from the database path
                                 data_dir = db.db_path.parent.resolve()
                                 
+                                # Get counts before clearing for verification
+                                total_before = db.get_total_article_count()
+                                ai_before = db.get_ai_article_count()
+                                
                                 # Clear database first
                                 db.clear_all_data()
+                                
+                                # Reset database singleton to force fresh connection
+                                reset_database_instance()
+                                
+                                # Verify database was cleared
+                                db_new = get_database()
+                                total_after = db_new.get_total_article_count()
+                                ai_after = db_new.get_ai_article_count()
+                                
+                                if total_after > 0 or ai_after > 0:
+                                    raise Exception(f"Database not fully cleared! Remaining: {total_after} total, {ai_after} AI articles")
                                 
                                 # Delete all JSON files (articles, metadata, danish summaries)
                                 json_files = list(data_dir.glob("articles_*.json"))
@@ -1796,9 +1811,6 @@ def main():
                                 if danish_summaries_file.exists():
                                     danish_summaries_file.unlink()
                                     deleted_files += 1
-                                
-                                # Reset database singleton to force fresh connection
-                                reset_database_instance()
                                 
                                 # Clear ALL Streamlit caches (data, resource, and memo)
                                 st.cache_data.clear()
@@ -1821,9 +1833,13 @@ def main():
                                 except:
                                     pass
                                 
-                                st.success(f"🗑️ Database cleared successfully! Deleted {deleted_files} JSON files.")
-                                st.info("All articles, statistics, and history have been permanently deleted.")
-                                time.sleep(2)
+                                # Set session state to force refresh
+                                st.session_state['db_cleared'] = True
+                                st.session_state['last_clear_time'] = time.time()
+                                
+                                st.success(f"🗑️ Database cleared successfully! Deleted {total_before} articles ({ai_before} AI) and {deleted_files} JSON files.")
+                                st.info("All articles, statistics, and history have been permanently deleted. Refreshing page...")
+                                time.sleep(1)
                                 st.rerun()
                                 
                             except Exception as e:
@@ -1833,7 +1849,7 @@ def main():
                                 st.code(error_details, language="python")
                 
                 with confirm_col2:
-                    if st.button(f"❌ {t('cancel')}", type="secondary", use_container_width=True):
+                    if st.button(f"❌ {t('cancel')}", type="secondary", width='stretch'):
                         st.rerun()
     else:
                                              
@@ -2014,11 +2030,11 @@ def main():
             
             bcol1, bcol2 = st.columns(2)
             with bcol1:
-                if st.button(t("prev"), key="ai_prev_btn", disabled=(page_index <= 1), use_container_width=True):
+                if st.button(t("prev"), key="ai_prev_btn", disabled=(page_index <= 1), width='stretch'):
                     st.session_state.articles_page = max(1, page_index - 1)
                     st.rerun()
             with bcol2:
-                if st.button(t("next"), key="ai_next_btn", disabled=(page_index >= total_pages), use_container_width=True):
+                if st.button(t("next"), key="ai_next_btn", disabled=(page_index >= total_pages), width='stretch'):
                     st.session_state.articles_page = min(total_pages, page_index + 1)
                     st.rerun()
         
@@ -2188,7 +2204,7 @@ def main():
         if len(topics_data) > 3:
             fig_topics.update_xaxes(tickangle=45)
         
-        st.plotly_chart(fig_topics, use_container_width=True)
+        st.plotly_chart(fig_topics, width='stretch')
     else:
         st.info("No AI topics data available yet. Run the pipeline to collect AI articles.")
     
@@ -2226,7 +2242,7 @@ def main():
         if len(category_data) > 5:
             fig_categories.update_xaxes(tickangle=45)
         
-        st.plotly_chart(fig_categories, use_container_width=True)
+        st.plotly_chart(fig_categories, width='stretch')
     else:
         st.info("No category data available yet. Run the pipeline to collect articles.")
     
@@ -2276,7 +2292,7 @@ def main():
         )
                                                                                 
         fig_trend.update_xaxes(type='category')
-        st.plotly_chart(fig_trend, use_container_width=True)
+        st.plotly_chart(fig_trend, width='stretch')
     else:
         st.info(f"No trend data available for {time_period} period yet. Run the pipeline to collect articles.")
         
@@ -2316,11 +2332,11 @@ def main():
                                              
     with footer_col2:
         if st.session_state.admin_logged_in:
-            if st.button(f"👤 {t('logout')}", type="secondary", use_container_width=True):
+            if st.button(f"👤 {t('logout')}", type="secondary", width='stretch'):
                 st.session_state.admin_logged_in = False
                 st.rerun()
         else:
-            if st.button(f"🔐 {t('login')}", type="secondary", use_container_width=True):
+            if st.button(f"🔐 {t('login')}", type="secondary", width='stretch'):
                 st.session_state.show_login = True
                 st.rerun()
 
