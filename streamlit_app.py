@@ -37,17 +37,7 @@ from database import get_database, reset_database_instance
 
                                
 from config.languages import LANGUAGES, get_language, set_language, t, translate_ai_topic, translate_domain_category, translate_day_name, translate_month_name, translate_week_label
-
-# Import load_config from config.py (file) - need to import the module directly to avoid conflict with config/ directory
-import importlib.util
-import sys
-from pathlib import Path
-_config_path = Path(__file__).parent / "config.py"
-_spec = importlib.util.spec_from_file_location("config_module", _config_path)
-_config_module = importlib.util.module_from_spec(_spec)
-sys.modules["config_module"] = _config_module
-_spec.loader.exec_module(_config_module)
-load_config = _config_module.load_config
+from config import load_config
 
 @st.cache_data(ttl=30)                             
 def get_ai_articles_by_topic(language: str = None) -> Dict[str, int]:
@@ -1721,7 +1711,6 @@ def main():
                                
         if status['status'] == 'running':
             st.success(f"🟢 {t('pipeline_running_with_interval')}")
-            st.info(f"💡 {t('use_refresh_buttons')}")
             
         elif status['status'] == 'error':
             st.error(f"🔴 {t('pipeline_error')} - {status.get('error_message', t('unknown_error'))}")
