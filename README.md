@@ -38,6 +38,8 @@ export FETCH_INTERVAL=120          # minutes between runs (default: 120)
 export MAX_ARTICLES=0              # 0 = unlimited mode (default)
 export LOG_LEVEL=INFO              # DEBUG, INFO, WARNING, ERROR
 export STORAGE_DIR=./data          # data storage directory
+export ADMIN_USERNAME=your_admin_username  # Admin login username (required)
+export ADMIN_PASSWORD=your_admin_password  # Admin login password (required)
 ```
 
 ### 3. Run the Dashboard
@@ -194,6 +196,8 @@ sqlite3 data/processed_articles.db "SELECT title, domain, processed_at FROM proc
 | `LOG_LEVEL` | Logging verbosity (DEBUG, INFO, WARNING, ERROR) | INFO |
 | `STORAGE_DIR` | Data storage directory | ./data |
 | `LOG_PATH` | Log file path | ./logs/news_scraper.log |
+| `ADMIN_USERNAME` | Admin login username (required for admin access) | None |
+| `ADMIN_PASSWORD` | Admin login password (required for admin access) | None |
 
 ## Requirements
 
