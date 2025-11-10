@@ -12,8 +12,8 @@ export MAX_ARTICLES=0
 
 # Start Streamlit app
 echo "📱 Starting Streamlit web application..."
-echo "🌐 Access the dashboard at: http://localhost:8501"
+echo "🌐 Access the dashboard at: http://localhost:8501 (local) or http://YOUR_SERVER_IP:8501 (remote)"
 echo "⏹️  Press Ctrl+C to stop the application"
 echo ""
 
-streamlit run streamlit_app.py --server.port 8501
+streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0
