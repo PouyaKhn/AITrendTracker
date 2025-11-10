@@ -1586,8 +1586,11 @@ def main():
                                                
     
                                                  
-    pid_file = Path("data/pipeline.pid")
-    start_time_file = Path("data/pipeline_start.txt")
+    # Use config storage directory for PID files to ensure correct paths on server
+    from config import load_config
+    config = load_config()
+    pid_file = config.storage_dir / "pipeline.pid"
+    start_time_file = config.storage_dir / "pipeline_start.txt"
     
     def _read_pid() -> int:
         try:
@@ -1684,7 +1687,8 @@ def main():
                                                                
     last_update_val = None
     try:
-        data_dir = Path("data")
+        # Use config storage directory for consistency
+        data_dir = config.storage_dir
         json_files = list(data_dir.glob("articles_*.json"))
         if json_files:
             latest_file = max(json_files, key=lambda p: p.stat().st_mtime)
