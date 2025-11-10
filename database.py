@@ -378,7 +378,8 @@ class ArticleDatabase:
     def get_total_article_count(self) -> int:
         """Get total number of processed articles."""
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            db_path_str = str(self.db_path.resolve())
+            with sqlite3.connect(db_path_str) as conn:
                 cursor = conn.cursor()
                 cursor.execute("SELECT COUNT(*) FROM processed_articles")
                 return cursor.fetchone()[0]
@@ -443,7 +444,8 @@ class ArticleDatabase:
     def get_ai_article_count(self) -> int:
         """Get total number of AI-related articles."""
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            db_path_str = str(self.db_path.resolve())
+            with sqlite3.connect(db_path_str) as conn:
                 cursor = conn.cursor()
                 cursor.execute("SELECT COUNT(*) FROM processed_articles WHERE ai_topic_detected = 1")
                 return cursor.fetchone()[0]
