@@ -41,12 +41,18 @@ LANGUAGES = {
         
                          
         'pipeline_running': 'Pipeline is running',
+        'pipeline_running_with_interval': 'Pipeline is running - Processing articles every 2 hours',
         'pipeline_stopped': 'Pipeline is stopped',
+        'pipeline_stopped_click_start': 'Pipeline is stopped - Click Start to begin',
         'pipeline_starting': 'Starting pipeline...',
         'pipeline_stopping': 'Stopping pipeline...',
+        'pipeline_error': 'Pipeline ERROR',
         'tracker_online': 'AI Trend Tracker is online - Data updates automatically.',
         'tracker_offline': 'AI Trend Tracker is offline.',
         'no_articles_found': 'No articles found',
+        'no_ai_articles_found': 'No AI-related articles found yet. Run the pipeline to fetch and analyze articles.',
+        'no_ai_topics_data': 'No AI topics data available yet. Run the pipeline to collect AI articles.',
+        'no_category_data': 'No category data available yet. Run the pipeline to collect articles.',
         'loading_articles': 'Loading articles...',
         'processing_articles': 'Processing articles...',
         
@@ -82,6 +88,7 @@ LANGUAGES = {
         
                         
         'login_failed': 'Login failed. Please check your credentials.',
+        'login_successful': 'Login successful! Redirecting to main page...',
         'pipeline_error': 'Pipeline error occurred',
         'database_error': 'Database error occurred',
         'network_error': 'Network error occurred',
@@ -111,6 +118,7 @@ LANGUAGES = {
         'live_statistics': 'Live Statistics',
         'live_updates': 'Live Updates',
         'manual_refresh_available': 'Manual refresh available',
+        'use_refresh_buttons': 'Use refresh buttons below to see live updates',
         
                             
         'prev': 'Prev',
@@ -268,12 +276,18 @@ LANGUAGES = {
         
                          
         'pipeline_running': 'Pipeline kører',
+        'pipeline_running_with_interval': 'Pipeline kører - Behandler artikler hver 2. time',
         'pipeline_stopped': 'Pipeline er stoppet',
+        'pipeline_stopped_click_start': 'Pipeline er stoppet - Klik på Start for at begynde',
         'pipeline_starting': 'Starter pipeline...',
         'pipeline_stopping': 'Stopper pipeline...',
+        'pipeline_error': 'Pipeline FEJL',
         'tracker_online': 'AI Trend Tracker er online - Data opdateres automatisk.',
         'tracker_offline': 'AI Trend Tracker er offline.',
         'no_articles_found': 'Ingen artikler fundet',
+        'no_ai_articles_found': 'Ingen AI-relaterede artikler fundet endnu. Kør pipeline for at hente og analysere artikler.',
+        'no_ai_topics_data': 'Ingen AI-emnedata tilgængelig endnu. Kør pipeline for at indsamle AI-artikler.',
+        'no_category_data': 'Ingen kategoridata tilgængelig endnu. Kør pipeline for at indsamle artikler.',
         'loading_articles': 'Indlæser artikler...',
         'processing_articles': 'Behandler artikler...',
         
@@ -309,6 +323,7 @@ LANGUAGES = {
         
                         
         'login_failed': 'Login mislykkedes. Tjek dine legitimationsoplysninger.',
+        'login_successful': 'Login succesfuldt! Omdirigerer til hovedside...',
         'pipeline_error': 'Pipeline-fejl opstod',
         'database_error': 'Database-fejl opstod',
         'network_error': 'Netværksfejl opstod',
@@ -338,6 +353,7 @@ LANGUAGES = {
         'live_statistics': 'Live statistikker',
         'live_updates': 'Live opdateringer',
         'manual_refresh_available': 'Manuel opdatering tilgængelig',
+        'use_refresh_buttons': 'Brug opdateringsknapperne nedenfor for at se live opdateringer',
         
                             
         'prev': 'Forrige',
