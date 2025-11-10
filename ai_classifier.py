@@ -99,24 +99,33 @@ class APIBasedAITopicClassifier:
         """Initialize API clients if API keys are available."""
                                          
         openai_api_key = os.getenv('OPENAI_API_KEY')
-        if openai_api_key and OPENAI_AVAILABLE:
+        anthropic_api_key = os.getenv('ANTHROPIC_API_KEY')
+        
+        # Debug logging (without exposing actual keys)
+        self.logger.info(f"API Key Check - OPENAI_API_KEY present: {bool(openai_api_key and openai_api_key.strip())}, "
+                        f"ANTHROPIC_API_KEY present: {bool(anthropic_api_key and anthropic_api_key.strip())}")
+        
+        if openai_api_key and openai_api_key.strip() and OPENAI_AVAILABLE:
             try:
-                self.openai_client = openai.OpenAI(api_key=openai_api_key)
+                self.openai_client = openai.OpenAI(api_key=openai_api_key.strip())
                 self.logger.info("OpenAI client initialized successfully")
             except Exception as e:
                 self.logger.warning(f"Failed to initialize OpenAI client: {e}")
         
                                             
-        anthropic_api_key = os.getenv('ANTHROPIC_API_KEY')
-        if anthropic_api_key and ANTHROPIC_AVAILABLE:
+        if anthropic_api_key and anthropic_api_key.strip() and ANTHROPIC_AVAILABLE:
             try:
-                self.anthropic_client = anthropic.Anthropic(api_key=anthropic_api_key)
+                self.anthropic_client = anthropic.Anthropic(api_key=anthropic_api_key.strip())
                 self.logger.info("Anthropic client initialized successfully")
             except Exception as e:
                 self.logger.warning(f"Failed to initialize Anthropic client: {e}")
         
         if not self.openai_client and not self.anthropic_client:
             self.logger.warning("No API clients available - will use fallback classification")
+            if not openai_api_key or not openai_api_key.strip():
+                self.logger.warning("OPENAI_API_KEY is missing or empty in environment")
+            if not anthropic_api_key or not anthropic_api_key.strip():
+                self.logger.debug("ANTHROPIC_API_KEY is missing or empty (this is OK if not using Anthropic)")
     
     def classify_article(self, text: str, title: str = "") -> AITopicResult:
         """
