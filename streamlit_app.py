@@ -1821,25 +1821,12 @@ def main():
                                     deleted_files += 1
                                 
                                 # Clear ALL Streamlit caches (data, resource, and memo)
+                                # This clears all cached data including all @st.cache_data functions
                                 st.cache_data.clear()
                                 if hasattr(st, 'cache_resource'):
                                     st.cache_resource.clear()
                                 if hasattr(st, 'cache'):
                                     st.cache.clear()
-                                
-                                # Clear specific cached functions (if they've been called)
-                                try:
-                                    get_ai_articles_by_topic.clear()
-                                except:
-                                    pass
-                                try:
-                                    get_ai_articles_by_category.clear()
-                                except:
-                                    pass
-                                try:
-                                    get_ai_articles_trend_data.clear()
-                                except:
-                                    pass
                                 
                                 # Set session state to force refresh
                                 st.session_state['db_cleared'] = True
