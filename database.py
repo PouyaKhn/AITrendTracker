@@ -583,6 +583,12 @@ def get_database() -> ArticleDatabase:
     return _db_instance
 
 
+def reset_database_instance():
+    """Reset the database singleton instance (useful after clearing data)."""
+    global _db_instance
+    _db_instance = None
+
+
 def init_database():
     """Initialize database (called at startup)."""
     db = get_database()
