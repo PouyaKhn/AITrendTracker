@@ -699,7 +699,7 @@ def get_domain_category(domain: str) -> str:
         domain: Domain name (e.g., 'bbc.com', 'dr.dk')
         
     Returns:
-        str: Category name or 'unknown' if not found
+        str: Category name or 'Other' if not found
     """
                                                                     
     normalized_domain = domain.lower()
@@ -716,7 +716,7 @@ def get_domain_category(domain: str) -> str:
             return category
     
                                           
-    return 'unknown'
+    return 'Other'
 
 class FetcherError(Exception):
     """Base exception for fetcher operations."""

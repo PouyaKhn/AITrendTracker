@@ -39,6 +39,15 @@ from database import get_database, reset_database_instance
 from config.languages import LANGUAGES, get_language, set_language, t, translate_ai_topic, translate_domain_category, translate_day_name, translate_month_name, translate_week_label
 from config import load_config
 
+def normalize_domain_category(category: Any) -> str:
+    """Normalize domain category values for display."""
+    if not category:
+        return 'Other'
+    category_str = str(category)
+    if category_str.lower() == 'unknown':
+        return 'Other'
+    return category_str
+
 @st.cache_data(ttl=30)                             
 def get_ai_articles_by_topic(language: str = None) -> Dict[str, int]:
     """Get count of AI articles by AI topic."""
@@ -76,7 +85,7 @@ def get_ai_articles_by_category(language: str = None) -> Dict[str, int]:
                                     
         categories = Counter()
         for article in ai_articles:
-            category = article.get('domain_category', 'Unknown')
+            category = normalize_domain_category(article.get('domain_category'))
                                                 
             translated_category = translate_domain_category(category)
             categories[translated_category] += 1
@@ -324,7 +333,7 @@ def get_ai_articles_with_content() -> List[Dict[str, Any]]:
                                 'published_date': full_article.get('date_publish', ''),
                                 'processed_at': ai_article.get('processed_at', ''),
                                 'language': ai_article.get('language', 'Unknown'),
-                                'domain_category': ai_article.get('domain_category', 'Unknown'),
+                                'domain_category': normalize_domain_category(ai_article.get('domain_category')),
                                 'ai_topic': ai_topic,
                                 'ai_confidence': ai_confidence
                             })
@@ -1993,7 +2002,7 @@ def main():
         with filter_col1:
             st.markdown(f"**{t('category')}**")
                                           
-            all_categories = sorted(list(set([article.get('domain_category', 'Unknown') for article in ai_articles])))
+            all_categories = sorted(list(set([normalize_domain_category(article.get('domain_category')) for article in ai_articles])))
             categories_display = [t('all')] + [translate_domain_category(cat) for cat in all_categories]
             
             selected_category = st.selectbox(
