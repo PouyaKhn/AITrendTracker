@@ -2011,6 +2011,12 @@ def main():
             [data-testid="stExpander"] details[open] > summary .st-emotion-cache-17c7e5f * {
                 color: #000000 !important;
             }
+            [data-testid="stExpander"] details[open] > summary:hover [data-testid="stMarkdownContainer"],
+            [data-testid="stExpander"] details[open] > summary:hover .st-emotion-cache-17c7e5f,
+            [data-testid="stExpander"] details[open] > summary:hover [data-testid="stMarkdownContainer"] *,
+            [data-testid="stExpander"] details[open] > summary:hover .st-emotion-cache-17c7e5f * {
+                color: #ffffff !important;
+            }
             [data-testid="stExpander"] summary:focus,
             [data-testid="stExpander"] summary:focus-visible {
                 outline: none !important;
