@@ -22,6 +22,7 @@ logger = get_logger(__name__)
 @dataclass
 class ProcessedArticle:
     """Data class for processed article records."""
+
     url: str
     title: str
     domain: str
@@ -33,6 +34,12 @@ class ProcessedArticle:
     extraction_method: str
     ai_topic_detected: bool
     file_stored_in: str
+    summary_en: Optional[str] = None
+    summary_da: Optional[str] = None
+    ai_topic: Optional[str] = None
+    ai_confidence: Optional[float] = None
+    ai_keywords: Optional[str] = None
+    published_at: Optional[str] = None
 
 
 class ArticleDatabase:
@@ -127,19 +134,27 @@ class ArticleDatabase:
                 cursor.execute('CREATE INDEX IF NOT EXISTS idx_run_started ON pipeline_runs(run_started_at)')
                 
                                                                                    
-                try:
-                    cursor.execute("ALTER TABLE processed_articles ADD COLUMN domain_category TEXT DEFAULT 'unknown'")
-                    logger.info("Added domain_category column to processed_articles table")
-                except sqlite3.OperationalError:
-                                                   
-                    pass
-                
-                try:
-                    cursor.execute("ALTER TABLE rejected_articles ADD COLUMN domain_category TEXT DEFAULT 'unknown'")
-                    logger.info("Added domain_category column to rejected_articles table")
-                except sqlite3.OperationalError:
-                                                   
-                    pass
+                column_updates = [
+                    ("processed_articles", "domain_category", "TEXT DEFAULT 'unknown'"),
+                    ("rejected_articles", "domain_category", "TEXT DEFAULT 'unknown'"),
+                    ("processed_articles", "summary_en", "TEXT"),
+                    ("processed_articles", "summary_da", "TEXT"),
+                    ("processed_articles", "ai_topic", "TEXT"),
+                    ("processed_articles", "ai_confidence", "REAL"),
+                    ("processed_articles", "ai_keywords", "TEXT"),
+                    ("processed_articles", "published_at", "TEXT"),
+                ]
+
+                for table_name, column_name, column_type in column_updates:
+                    try:
+                        cursor.execute(
+                            f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}"
+                        )
+                        logger.info(
+                            f"Added column {column_name} to {table_name} table"
+                        )
+                    except sqlite3.OperationalError:
+                        pass
                 
                 conn.commit()
                 logger.info(f"Database initialized: {self.db_path}")
@@ -204,24 +219,51 @@ class ArticleDatabase:
                     if 'ai_topic_analysis' in article:
                         ai_topic_detected = article['ai_topic_analysis'].get('is_ai_topic', False)
                     
-                    cursor.execute('''
+                    analysis = article.get('ai_topic_analysis', {}) or {}
+                    summary_en = article.get('summary_en') or analysis.get('explanation', '')
+                    summary_da = article.get('summary_da') or summary_en
+                    ai_topic = article.get('ai_topic') or analysis.get('topic')
+                    ai_confidence = article.get('ai_confidence') or analysis.get('confidence')
+                    ai_keywords = article.get('ai_keywords') or analysis.get('keywords', [])
+                    if isinstance(ai_keywords, list):
+                        ai_keywords_serialized = json.dumps(ai_keywords, ensure_ascii=False)
+                    else:
+                        ai_keywords_serialized = str(ai_keywords) if ai_keywords else None
+
+                    processed_at = (
+                        article.get('processed_at')
+                        or article.get('date_download')
+                        or datetime.now(timezone.utc).isoformat()
+                    )
+
+                    cursor.execute(
+                        '''
                         INSERT OR REPLACE INTO processed_articles 
                         (url, title, domain, domain_category, language, source_country, processed_at, 
-                         gdelt_id, extraction_method, ai_topic_detected, file_stored_in)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ''', (
-                        article.get('url', ''),
-                        article.get('title', ''),
-                        article.get('domain', ''),
-                        article.get('domain_category', 'unknown'),
-                        article.get('language', ''),
-                        article.get('sourcecountry', ''),
-                        article.get('date_download', ''),
-                        article.get('gdelt_id', ''),
-                        article.get('extraction_method', ''),
-                        ai_topic_detected,
-                        file_stored_in
-                    ))
+                         gdelt_id, extraction_method, ai_topic_detected, file_stored_in,
+                         summary_en, summary_da, ai_topic, ai_confidence, ai_keywords, published_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ''',
+                        (
+                            article.get('url', ''),
+                            article.get('title', ''),
+                            article.get('domain', ''),
+                            article.get('domain_category', 'unknown'),
+                            article.get('language', ''),
+                            article.get('sourcecountry', ''),
+                            processed_at,
+                            article.get('gdelt_id', ''),
+                            article.get('extraction_method', ''),
+                            ai_topic_detected,
+                            file_stored_in,
+                            summary_en,
+                            summary_da,
+                            ai_topic,
+                            ai_confidence,
+                            ai_keywords_serialized,
+                            article.get('date_publish'),
+                        ),
+                    )
                 
                 conn.commit()
                 logger.info(f"Added {len(articles)} articles to database")
@@ -476,15 +518,31 @@ class ArticleDatabase:
                 cursor = conn.cursor()
                 cursor.execute("""
                     SELECT url, title, domain, domain_category, language, 
-                           source_country, processed_at, ai_topic_detected
+                           source_country, processed_at, ai_topic_detected,
+                           summary_en, summary_da, ai_topic, ai_confidence,
+                           ai_keywords, published_at
                     FROM processed_articles 
                     WHERE ai_topic_detected = 1
                     ORDER BY processed_at DESC 
                     LIMIT ?
                 """, (limit,))
                 
-                columns = ['url', 'title', 'domain', 'domain_category', 'language', 
-                          'source_country', 'processed_at', 'ai_topic_detected']
+                columns = [
+                    'url',
+                    'title',
+                    'domain',
+                    'domain_category',
+                    'language',
+                    'source_country',
+                    'processed_at',
+                    'ai_topic_detected',
+                    'summary_en',
+                    'summary_da',
+                    'ai_topic',
+                    'ai_confidence',
+                    'ai_keywords',
+                    'published_at',
+                ]
                 return [dict(zip(columns, row)) for row in cursor.fetchall()]
         except Exception as e:
             logger.error(f"Failed to get recent AI articles: {e}")
