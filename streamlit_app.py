@@ -48,6 +48,15 @@ def normalize_domain_category(category: Any) -> str:
         return 'Other'
     return category_str
 
+def normalize_ai_topic(topic: Any) -> str:
+    """Normalize AI topic values for display."""
+    if not topic:
+        return 'Other'
+    topic_str = str(topic)
+    if topic_str.lower() in ['unknown', 'unknown topic', 'none', 'null']:
+        return 'Other'
+    return topic_str
+
 @st.cache_data(ttl=30)                             
 def get_ai_articles_by_topic(language: str = None) -> Dict[str, int]:
     """Get count of AI articles by AI topic."""
@@ -60,8 +69,8 @@ def get_ai_articles_by_topic(language: str = None) -> Dict[str, int]:
                                     
         topics = Counter()
         for article in ai_articles:
-            topic = article.get('ai_topic', 'Unknown Topic')
-            if topic and topic != 'Unknown Topic':
+            topic = normalize_ai_topic(article.get('ai_topic'))
+            if topic and topic != 'Other':
                                                  
                 translated_topic = translate_ai_topic(topic)
                 topics[translated_topic] += 1
@@ -220,7 +229,7 @@ def get_ai_articles_with_content() -> List[Dict[str, Any]]:
             except (TypeError, ValueError):
                 ai_confidence = 0.0
 
-            ai_topic = article.get('ai_topic') or 'Unknown Topic'
+            ai_topic = normalize_ai_topic(article.get('ai_topic'))
 
             ai_keywords = article.get('ai_keywords')
             if isinstance(ai_keywords, str):
@@ -1147,22 +1156,23 @@ def main():
     st.markdown("""
     <script>
     (function() {
-        let lastRefresh = sessionStorage.getItem('lastAutoRefresh');
-        const now = Date.now();
         const refreshInterval = 300000;
+        let refreshTimer = null;
         
-        if (!lastRefresh || (now - parseInt(lastRefresh)) >= refreshInterval) {
-            sessionStorage.setItem('lastAutoRefresh', now.toString());
-            setTimeout(function() {
+        function scheduleRefresh() {
+            if (refreshTimer) {
+                clearTimeout(refreshTimer);
+            }
+            refreshTimer = setTimeout(function() {
                 window.location.reload();
             }, refreshInterval);
-        } else {
-            const timeSinceLastRefresh = now - parseInt(lastRefresh);
-            const timeUntilNextRefresh = refreshInterval - timeSinceLastRefresh;
-            setTimeout(function() {
-                window.location.reload();
-            }, timeUntilNextRefresh);
         }
+        
+        scheduleRefresh();
+        
+        window.addEventListener('focus', function() {
+            scheduleRefresh();
+        });
     })();
     </script>
     """, unsafe_allow_html=True)
@@ -1928,7 +1938,7 @@ def main():
         with filter_col2:
             st.markdown(f"**{t('ai_topic')}**")
                                   
-            all_topics = sorted(list(set([article.get('ai_topic', 'Unknown Topic') for article in ai_articles if article.get('ai_topic')])))
+            all_topics = sorted(list(set([normalize_ai_topic(article.get('ai_topic')) for article in ai_articles if article.get('ai_topic')])))
             topics_display = [t('all')] + [translate_ai_topic(topic) for topic in all_topics]
             
             selected_topic = st.selectbox(
@@ -2062,7 +2072,7 @@ def main():
                     with col2:
                         st.markdown(f"**{t('domain')}:** {article['domain']}")
                         st.markdown(f"**{t('category')}:** {translate_domain_category(article['domain_category'])}")
-                        st.markdown(f"**{t('ai_topic')}:** {translate_ai_topic(article.get('ai_topic', 'Unknown'))}")
+                        st.markdown(f"**{t('ai_topic')}:** {translate_ai_topic(normalize_ai_topic(article.get('ai_topic')))}")
                         st.markdown(f"**{t('language')}:** {article['language']}")
                         
                                       

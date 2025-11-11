@@ -495,8 +495,8 @@ def t(key):
 
 def translate_ai_topic(topic: str) -> str:
     """Translate AI topic from English to current language"""
-    if not topic or topic == 'Unknown Topic':
-        return t('unknown')
+    if not topic or topic.lower() in ['unknown', 'unknown topic', 'other', 'none', 'null']:
+        return t('other')
     
                                                         
     topic_mapping = {
@@ -516,7 +516,7 @@ def translate_ai_topic(topic: str) -> str:
         'AI Technology and Infrastructure': 'ai_technology_infrastructure'
     }
     
-    translation_key = topic_mapping.get(topic, 'unknown')
+    translation_key = topic_mapping.get(topic, 'other')
     return t(translation_key)
 
 def translate_domain_category(category: str) -> str:
