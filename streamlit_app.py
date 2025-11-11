@@ -211,6 +211,8 @@ def get_ai_articles_with_content() -> List[Dict[str, Any]]:
                 summary_en = summary_en[8:]
 
             summary_da = article.get('summary_da') or summary_en
+            if summary_da.startswith('OpenAI: '):
+                summary_da = summary_da[8:]
 
             ai_confidence = article.get('ai_confidence')
             try:
