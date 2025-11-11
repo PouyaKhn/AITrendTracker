@@ -12,6 +12,13 @@ from database import get_database, init_database
 from logger import get_logger
 from config import load_config
 from datetime import datetime
+from pathlib import Path
+
+from summaries import (
+    load_danish_summary_cache,
+    save_danish_summary_cache,
+    translate_summary_to_danish,
+)
 
                    
 logger = get_logger(__name__)
@@ -52,10 +59,15 @@ def run_batch():
     
     Supports unlimited mode when MAX_ARTICLES=0.
     """
-                         
     db = init_database()
-    
-                                 
+    config = load_config()
+
+    storage_dir = config.storage_dir if hasattr(config, "storage_dir") else Path("data")
+    summary_cache_path = Path(storage_dir) / "danish_summaries.json"
+    summary_cache = load_danish_summary_cache(summary_cache_path)
+    summary_cache_updated = False
+
+                             
     run_id = db.start_pipeline_run()
     
     stats = {
@@ -80,7 +92,6 @@ def run_batch():
                                                                                
         try:
                                           
-            config = load_config()
             max_articles = config.max_articles
             
                                                                  
@@ -222,15 +233,48 @@ def run_batch():
         logger.info("Starting AI topic classification")
         if processed_articles:
             try:
-                                       
                 ai_results = classify_articles_ai_topics(processed_articles)
-                stats['ai_topic_count'] = len([a for a in ai_results if a.get('ai_topic_analysis', {}).get('is_ai_topic', False)])
-                logger.info(f"AI topic classification completed: {stats['ai_topic_count']} AI-related articles detected")
+                stats['ai_topic_count'] = len(
+                    [
+                        a
+                        for a in ai_results
+                        if a.get("ai_topic_analysis", {}).get("is_ai_topic", False)
+                    ]
+                )
+                logger.info(
+                    f"AI topic classification completed: {stats['ai_topic_count']} AI-related articles detected"
+                )
             except Exception as e:
                 logger.warning(f"AI topic classification failed: {e}")
-                stats['ai_topic_count'] = 0
+                stats["ai_topic_count"] = 0
         else:
-            stats['ai_topic_count'] = 0
+            stats["ai_topic_count"] = 0
+
+        # Precompute summaries for AI articles to avoid delays in the UI
+        for article in processed_articles:
+            analysis = article.get("ai_topic_analysis", {}) or {}
+
+            if analysis:
+                article["ai_topic"] = analysis.get("topic")
+                article["ai_confidence"] = analysis.get("confidence")
+                article["ai_keywords"] = analysis.get("keywords", [])
+
+            summary_en = analysis.get("explanation") if analysis else None
+            if summary_en:
+                article["summary_en"] = summary_en
+
+            if analysis.get("is_ai_topic"):
+                url = article.get("url", "")
+                danish_summary, cache_changed = translate_summary_to_danish(
+                    summary_en or "",
+                    url,
+                    summary_cache,
+                )
+                article["summary_da"] = danish_summary or summary_en or ""
+                if cache_changed:
+                    summary_cache_updated = True
+            elif summary_en:
+                article["summary_da"] = summary_en
 
                                                       
         if processed_articles or rejected_articles:
@@ -252,6 +296,9 @@ def run_batch():
                 
                 logger.info(f"Successfully stored {len(processed_articles)} valid articles and {len(rejected_articles)} rejected articles")
                 logger.info(f"Files created: {articles_file}, {articles_metadata_file}, {rejected_file}, {rejected_metadata_file}")
+
+                if summary_cache_updated:
+                    save_danish_summary_cache(summary_cache_path, summary_cache)
             except Exception as e:
                 logger.error(f"Failed to store articles: {e}")
                 stats['failed_storage'] = len(processed_articles) + len(rejected_articles)

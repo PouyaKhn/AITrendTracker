@@ -195,169 +195,58 @@ def get_ai_articles_trend_data(time_period: str, language: str = None) -> Dict[s
 
                                                                                     
 
-def generate_danish_summary(english_summary: str, url: str) -> str:
-    """Generate Danish summary from English summary using OpenAI."""
-    try:
-        import openai
-        import os
-        from dotenv import load_dotenv
-        
-                                                                   
-        load_dotenv()
-        
-                                         
-        openai_api_key = os.getenv('OPENAI_API_KEY')
-        if not openai_api_key:
-            print(f"Warning: No OpenAI API key found for translating: {url[:50]}...")
-            return english_summary                                
-        
-                                  
-        client = openai.OpenAI(api_key=openai_api_key)
-        
-                                       
-        prompt = f"""Translate the following English article summary to Danish. Maintain the same meaning and tone.
-
-English summary:
-{english_summary}
-
-Danish translation:"""
-
-                         
-        response = client.chat.completions.create(
-            model="gpt-4o-mini-2024-07-18",
-            messages=[
-                {"role": "system", "content": "You are a professional English-to-Danish translator. Translate the given text to Danish."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.2,
-            max_tokens=500
-        )
-        
-        danish_summary = response.choices[0].message.content.strip()
-        
-                                                                           
-        if danish_summary == english_summary or len(danish_summary) < 10:
-            print(f"Warning: Translation seems to have failed for: {url[:50]}...")
-            return english_summary
-        
-        print(f"✓ Translated summary for: {url[:50]}...")
-        
-                                            
-        time.sleep(0.1)
-        
-        return danish_summary
-        
-    except Exception as e:
-        print(f"Error translating summary for {url[:50]}...: {str(e)}")
-                                                               
-        return english_summary
-
 def get_ai_articles_with_content() -> List[Dict[str, Any]]:
-    """Get AI articles with their existing AI classification explanations from JSON files."""
+    """Get AI articles with summaries and metadata from the database."""
     try:
         db = get_database()
-        
-                                       
-        ai_articles = db.get_recent_ai_articles(limit=1000)                     
-        
+        ai_articles = db.get_recent_ai_articles(limit=1000)
+
         if not ai_articles:
             return []
-        
-                                              
-        data_dir = Path("data")
-        articles_with_content = []
-        
-                                     
-        danish_summaries_file = data_dir / "danish_summaries.json"
-        danish_summaries = {}
-        if danish_summaries_file.exists():
+
+        articles_with_content: List[Dict[str, Any]] = []
+        for article in ai_articles:
+            summary_en = article.get('summary_en') or 'No AI explanation available'
+            if summary_en.startswith('OpenAI: '):
+                summary_en = summary_en[8:]
+
+            summary_da = article.get('summary_da') or summary_en
+
+            ai_confidence = article.get('ai_confidence')
             try:
-                with open(danish_summaries_file, 'r', encoding='utf-8') as f:
-                    danish_summaries = json.load(f)
-            except Exception as e:
-                pass                                               
-        
-                                                   
-        new_translations = 0
-        max_translations_per_load = 10                          
-        
-                                               
-        json_files = list(data_dir.glob("articles_*.json"))
-        
-        for json_file in json_files:
-            try:
-                with open(json_file, 'r', encoding='utf-8') as f:
-                    all_articles = json.load(f)
-                
-                                                      
-                for ai_article in ai_articles:
-                    for full_article in all_articles:
-                        if full_article.get('url') == ai_article.get('url'):
-                                                                                       
-                            ai_analysis = full_article.get('ai_topic_analysis', {})
-                            summary_en = ai_analysis.get('explanation', 'No AI explanation available')
-                            
-                                                                              
-                            if summary_en.startswith('OpenAI: '):
-                                summary_en = summary_en[8:]                            
-                            
-                                                            
-                            url = ai_article.get('url', '')
-                            if url in danish_summaries:
-                                summary_da = danish_summaries[url]
-                            else:
-                                                                                          
-                                if new_translations < max_translations_per_load:
-                                    try:
-                                        summary_da = generate_danish_summary(summary_en, url)
-                                                       
-                                        danish_summaries[url] = summary_da
-                                        new_translations += 1
-                                    except Exception as e:
-                                                                                      
-                                        summary_da = summary_en
-                                else:
-                                                                                    
-                                    summary_da = summary_en
-                            
-                                                          
-                            ai_topic = ai_analysis.get('topic', 'Unknown Topic')
-                            ai_confidence = ai_analysis.get('confidence', 0.0)
-                            
-                            articles_with_content.append({
-                                'title': ai_article.get('title', 'No title'),
-                                'summary_en': summary_en,
-                                'summary_da': summary_da,
-                                'url': url,
-                                'domain': ai_article.get('domain', 'Unknown'),
-                                'published_date': full_article.get('date_publish', ''),
-                                'processed_at': ai_article.get('processed_at', ''),
-                                'language': ai_article.get('language', 'Unknown'),
-                                'domain_category': normalize_domain_category(ai_article.get('domain_category')),
-                                'ai_topic': ai_topic,
-                                'ai_confidence': ai_confidence
-                            })
-                            break
-            except Exception as e:
-                st.error(f"Error reading {json_file}: {str(e)}")
-                continue
-        
-                                             
-        try:
-            with open(danish_summaries_file, 'w', encoding='utf-8') as f:
-                json.dump(danish_summaries, f, ensure_ascii=False, indent=2)
-            
-                                                                
-            if new_translations > 0:
-                st.info(f"✓ Genereret {new_translations} nye danske sammendrag. Genindlæs siden for at generere flere.")
-        except Exception as e:
-            pass                                          
-        
-                                                  
+                ai_confidence = float(ai_confidence) if ai_confidence is not None else 0.0
+            except (TypeError, ValueError):
+                ai_confidence = 0.0
+
+            ai_topic = article.get('ai_topic') or 'Unknown Topic'
+
+            ai_keywords = article.get('ai_keywords')
+            if isinstance(ai_keywords, str):
+                try:
+                    ai_keywords = json.loads(ai_keywords)
+                except json.JSONDecodeError:
+                    ai_keywords = []
+            if not isinstance(ai_keywords, list):
+                ai_keywords = []
+
+            articles_with_content.append({
+                'title': article.get('title', 'No title'),
+                'summary_en': summary_en,
+                'summary_da': summary_da,
+                'url': article.get('url', ''),
+                'domain': article.get('domain', 'Unknown'),
+                'published_date': article.get('published_at', ''),
+                'processed_at': article.get('processed_at', ''),
+                'language': article.get('language', 'Unknown'),
+                'domain_category': normalize_domain_category(article.get('domain_category')),
+                'ai_topic': ai_topic,
+                'ai_confidence': ai_confidence,
+                'ai_keywords': ai_keywords,
+            })
+
         articles_with_content.sort(key=lambda x: x.get('processed_at', ''), reverse=True)
-        
         return articles_with_content
-        
+
     except Exception as e:
         st.error(f"Error getting AI articles with content: {str(e)}")
         return []
@@ -1253,6 +1142,28 @@ def main():
                                                          
     typeface_logo = base64.b64encode(open("images/5. typeface_#0f0f0f.png", "rb").read()).decode()
     
+    st.markdown("""
+    <script>
+    (function() {
+        let lastRefresh = sessionStorage.getItem('lastAutoRefresh');
+        const now = Date.now();
+        const refreshInterval = 300000;
+        
+        if (!lastRefresh || (now - parseInt(lastRefresh)) >= refreshInterval) {
+            sessionStorage.setItem('lastAutoRefresh', now.toString());
+            setTimeout(function() {
+                window.location.reload();
+            }, refreshInterval);
+        } else {
+            const timeSinceLastRefresh = now - parseInt(lastRefresh);
+            const timeUntilNextRefresh = refreshInterval - timeSinceLastRefresh;
+            setTimeout(function() {
+                window.location.reload();
+            }, timeUntilNextRefresh);
+        }
+    })();
+    </script>
+    """, unsafe_allow_html=True)
                            
     # Use relative URLs to work with any domain/IP
     en_link = "/?lang=en"
@@ -2087,61 +1998,22 @@ def main():
         st.markdown(
             """
             <style>
-            /* Target the exact structure for article expander titles */
             [data-testid="stExpander"] summary [data-testid="stMarkdownContainer"],
             [data-testid="stExpander"] summary .st-emotion-cache-17c7e5f,
             [data-testid="stExpander"] summary [data-testid="stMarkdownContainer"] *,
             [data-testid="stExpander"] summary .st-emotion-cache-17c7e5f * {
                 font-size: 19px !important;
+                color: #000000 !important;
+            }
+            [data-testid="stExpander"] summary:hover [data-testid="stMarkdownContainer"] *,
+            [data-testid="stExpander"] summary:focus [data-testid="stMarkdownContainer"] * {
+                color: #000000 !important;
+            }
+            [data-testid="stExpander"] summary:focus,
+            [data-testid="stExpander"] summary:focus-visible {
+                outline: none !important;
             }
             </style>
-            <script>
-            function increaseArticleTitleFontSize() {
-                // Target the specific markdown container in expander summaries
-                const expanders = document.querySelectorAll('[data-testid="stExpander"]');
-                
-                expanders.forEach(expander => {
-                    const summary = expander.querySelector('summary');
-                    if (summary) {
-                        // Find the markdown container in the summary
-                        const markdownContainer = summary.querySelector('[data-testid="stMarkdownContainer"]');
-                        if (markdownContainer) {
-                            markdownContainer.style.setProperty('font-size', '18px', 'important');
-                            
-                            // Also apply to all children
-                            const allElements = markdownContainer.querySelectorAll('*');
-                            allElements.forEach(el => {
-                                el.style.setProperty('font-size', '18px', 'important');
-                            });
-                        }
-                        
-                        // Also try by class name
-                        const markdownByClass = summary.querySelector('.st-emotion-cache-17c7e5f');
-                        if (markdownByClass) {
-                            markdownByClass.style.setProperty('font-size', '18px', 'important');
-                            const allElements = markdownByClass.querySelectorAll('*');
-                            allElements.forEach(el => {
-                                el.style.setProperty('font-size', '18px', 'important');
-                            });
-                        }
-                    }
-                });
-            }
-            
-            // Run immediately
-            setTimeout(increaseArticleTitleFontSize, 100);
-            setTimeout(increaseArticleTitleFontSize, 500);
-            setTimeout(increaseArticleTitleFontSize, 1000);
-            
-            // Run on DOM changes
-            const observer = new MutationObserver(function() {
-                increaseArticleTitleFontSize();
-            });
-            observer.observe(document.body, { childList: true, subtree: true });
-            
-            // Also run on interval
-            setInterval(increaseArticleTitleFontSize, 300);
-            </script>
             """,
             unsafe_allow_html=True
         )
