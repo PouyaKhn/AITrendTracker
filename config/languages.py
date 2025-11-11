@@ -521,8 +521,8 @@ def translate_ai_topic(topic: str) -> str:
 
 def translate_domain_category(category: str) -> str:
     """Translate domain category from English to current language"""
-    if not category or category == 'Unknown':
-        return t('unknown')
+    if not category:
+        return t('other')
     
                                                                 
     category_mapping = {
@@ -533,12 +533,15 @@ def translate_domain_category(category: str) -> str:
         'photography': 'photography',
         'web and ux design': 'web_ux_design',
         'film and tv production': 'film_tv_production',
+        'other': 'other',
         'unknown': 'unknown'
     }
     
                                         
     normalized_category = category.lower()
-    translation_key = category_mapping.get(normalized_category, 'unknown')
+    if normalized_category == 'unknown':
+        normalized_category = 'other'
+    translation_key = category_mapping.get(normalized_category, 'other')
     return t(translation_key)
 
 def translate_day_name(day_name: str) -> str:
