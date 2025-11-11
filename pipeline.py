@@ -13,6 +13,7 @@ from logger import get_logger
 from config import load_config
 from datetime import datetime
 from pathlib import Path
+from typing import Set
 
 from summaries import (
     load_danish_summary_cache,
@@ -194,6 +195,9 @@ def run_batch():
             processed_urls = db.get_processed_urls()
             logger.debug(f"Found {len(processed_urls)} already processed URLs in database")
             
+            from fetcher import normalize_domain_for_dedup
+            
+            seen_domain_title: Set[tuple] = set()
             final_articles = []
             duplicates_removed = 0
             removed_danish_count = 0
@@ -202,7 +206,23 @@ def run_batch():
                                                         
             for article in processed_articles:
                 url = article.get('url', '')
-                if url and url not in processed_urls:
+                title = article.get('title', '').strip().lower()
+                domain = article.get('domain', '')
+                
+                is_duplicate = False
+                
+                if url and url in processed_urls:
+                    is_duplicate = True
+                elif domain and title:
+                    normalized_domain = normalize_domain_for_dedup(domain)
+                    domain_title_key = (normalized_domain, title)
+                    if domain_title_key in seen_domain_title:
+                        is_duplicate = True
+                        logger.debug(f"Duplicate detected by domain+title: {normalized_domain} - '{title[:50]}...'")
+                    else:
+                        seen_domain_title.add(domain_title_key)
+                
+                if not is_duplicate:
                     final_articles.append(article)
                 else:
                     duplicates_removed += 1
@@ -261,6 +281,8 @@ def run_batch():
 
             summary_en = analysis.get("explanation") if analysis else None
             if summary_en:
+                if summary_en.startswith("OpenAI: "):
+                    summary_en = summary_en[8:]
                 article["summary_en"] = summary_en
 
             if analysis.get("is_ai_topic"):

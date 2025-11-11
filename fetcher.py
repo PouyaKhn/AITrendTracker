@@ -110,6 +110,35 @@ def get_domain_failure_report() -> Dict[str, Any]:
     tracker = get_domain_failure_tracker()
     return tracker.get_failed_domains_report()
 
+def normalize_domain_for_dedup(domain: str) -> str:
+    """
+    Normalize domain for duplicate detection by removing subdomains.
+    
+    Examples:
+        edition.cnn.com -> cnn.com
+        www.cnn.com -> cnn.com
+        cnn.com -> cnn.com
+        deadline.com -> deadline.com
+    
+    Args:
+        domain: Domain string (may include subdomain)
+        
+    Returns:
+        Normalized domain (base domain only)
+    """
+    if not domain:
+        return domain
+    
+    domain = domain.lower().strip()
+    if domain.startswith('www.'):
+        domain = domain[4:]
+    
+    parts = domain.split('.')
+    if len(parts) >= 2:
+        return '.'.join(parts[-2:])
+    return domain
+
+
 def _domain_suffix_matches(candidate_domain: str, target_domain: str) -> bool:
     """Return True if candidate_domain is exactly target_domain (no subdomains)."""
     candidate = candidate_domain.lower()
@@ -295,6 +324,58 @@ def _extract_text_advanced(url: str, domain: str) -> Optional[str]:
     
                                                         
     return _extract_text_fallback(url, domain)
+
+
+def _extract_deadline_title(url: str) -> Optional[str]:
+    """
+    Extract actual article title from deadline.com when GDELT provides 'Deadline' as title.
+    
+    Args:
+        url: Article URL from deadline.com
+        
+    Returns:
+        Extracted title or None if extraction fails
+    """
+    try:
+        import requests
+        from bs4 import BeautifulSoup
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        title_selectors = [
+            'h1.article-title',
+            'h1.a-headline',
+            'h1[class*="title"]',
+            'h1[class*="headline"]',
+            'article h1',
+            'h1',
+        ]
+        
+        for selector in title_selectors:
+            title_elem = soup.select_one(selector)
+            if title_elem:
+                title_text = title_elem.get_text(strip=True)
+                if title_text and title_text.lower() != 'deadline' and len(title_text) > 5:
+                    return title_text
+        
+        meta_title = soup.find('meta', property='og:title')
+        if meta_title and meta_title.get('content'):
+            meta_title_text = meta_title.get('content').strip()
+            if meta_title_text and meta_title_text.lower() != 'deadline' and len(meta_title_text) > 5:
+                return meta_title_text
+        
+        return None
+        
+    except Exception as e:
+        logger.debug(f"Failed to extract deadline.com title from {url}: {e}")
+        return None
 
 
 def _extract_text_fallback(url: str, domain: str) -> Optional[str]:
@@ -1139,7 +1220,12 @@ def _parse_gdeltdoc_dataframe_row(row, processed_urls: Set[str] = None) -> Optio
         domain_category = get_domain_category(article_domain)
         logger.debug(f"Domain category for {article_domain}: {domain_category}")
         
-                                                
+        if article_domain == 'deadline.com' and (not title or title.strip().lower() == 'deadline'):
+            extracted_title = _extract_deadline_title(url)
+            if extracted_title:
+                title = extracted_title
+                logger.info(f"✓ Extracted actual title from deadline.com: {title[:80]}...")
+        
         return {
             'url': url,
             'title': title,
@@ -1303,7 +1389,10 @@ def _filter_failed_domains(articles: List[Dict[str, Any]], tracker: DomainFailur
 
 def _remove_duplicate_articles(articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
-    Remove duplicate articles based on URL, checking only in-memory duplicates.
+    Remove duplicate articles based on URL and normalized domain+title.
+    
+    Handles subdomain variations (e.g., cnn.com vs edition.cnn.com) by normalizing
+    domains and checking for same title from same base domain.
     
     NOTE: Database deduplication is now handled AFTER processing in pipeline.py
     to ensure we don't lose articles before they're fully processed.
@@ -1315,12 +1404,30 @@ def _remove_duplicate_articles(articles: List[Dict[str, Any]]) -> List[Dict[str,
         List[Dict]: Deduplicated list of articles (in-memory only)
     """
     seen_urls: Set[str] = set()
+    seen_domain_title: Set[tuple] = set()
     unique_articles = []
     
     for article in articles:
         url = article.get('url', '')
-        if url and url not in seen_urls:
-            seen_urls.add(url)
+        title = article.get('title', '').strip().lower()
+        domain = article.get('domain', '')
+        
+        is_duplicate = False
+        
+        if url and url in seen_urls:
+            is_duplicate = True
+        elif domain and title:
+            normalized_domain = normalize_domain_for_dedup(domain)
+            domain_title_key = (normalized_domain, title)
+            if domain_title_key in seen_domain_title:
+                is_duplicate = True
+                logger.debug(f"Duplicate detected: {normalized_domain} - '{title[:50]}...'")
+            else:
+                seen_domain_title.add(domain_title_key)
+        
+        if not is_duplicate:
+            if url:
+                seen_urls.add(url)
             unique_articles.append(article)
             
     logger.info(f"Removed {len(articles) - len(unique_articles)} in-memory duplicate articles")
