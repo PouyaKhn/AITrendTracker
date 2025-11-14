@@ -1,0 +1,15 @@
+[Unit]
+Description=Streamlit App
+After=network.target
+
+[Service]
+User=deployer
+WorkingDirectory=/home/deployer/Secondment
+Environment="PATH=/home/deployer/Secondment/venv/bin"
+ExecStart=/home/deployer/Secondment/venv/bin/streamlit run streamlit_app.py --server.port 8501 --server.address 127.0.0.1 --server.baseUrlPath=/aitrendtracker
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+
