@@ -1178,8 +1178,10 @@ def main():
     """, unsafe_allow_html=True)
                            
     # Use relative URLs to work with any domain/IP
-    en_link = "/?lang=en"
-    da_link = "/?lang=da"
+    # Include base path for subdirectory deployment
+    base_path = "/aitrendtracker"
+    en_link = f"{base_path}/?lang=en"
+    da_link = f"{base_path}/?lang=da"
     
     st.markdown(f'''
         <div class="sticky-header" id="stickyHeader">
