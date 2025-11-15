@@ -169,7 +169,7 @@ Respond only with the JSON format."""
             response = self.openai_client.chat.completions.create(
                 model="gpt-4o-mini-2024-07-18",
                 messages=[
-                    {"role": "system", "content": "You are an expert AI researcher who can accurately classify whether articles are about artificial intelligence topics or not."},
+                    {"role": "system", "content": "You are an AI researcher who classifies whether articles are about artificial intelligence topics."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.1,
@@ -201,10 +201,8 @@ Respond only with the JSON format."""
     def _classify_with_anthropic(self, text: str, title: str = "") -> AITopicResult:
         """Classify article using Anthropic API."""
         try:
-                                    
             full_text = f"Title: {title}\n\nContent: {text}".strip()
             
-                                                          
             prompt = f"""Analyze this article and determine if it is primarily about artificial intelligence (AI) or not.
 
 Article to analyze:
