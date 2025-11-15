@@ -114,17 +114,7 @@ class APIBasedAITopicClassifier:
                 self.logger.debug("ANTHROPIC_API_KEY is missing or empty (this is OK if not using Anthropic)")
     
     def classify_article(self, text: str, title: str = "") -> AITopicResult:
-        """
-        Classify whether an article is about AI topics using API-based LLM analysis.
-        
-        Args:
-            text: Full article text content
-            title: Article title (optional, used for additional context)
-            
-        Returns:
-            AITopicResult with classification results
-        """
-                                            
+        """Classify whether an article is about AI topics."""
         if self.openai_client:
             return self._classify_with_openai(text, title)
         elif self.anthropic_client:
