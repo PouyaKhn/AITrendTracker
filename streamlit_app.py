@@ -1153,27 +1153,55 @@ def main():
                                                          
     typeface_logo = base64.b64encode(open("images/5. typeface_#0f0f0f.png", "rb").read()).decode()
     
-    st.markdown("""
+    # Check pipeline status for dynamic refresh
+    config = load_config()
+    pid_file = config.storage_dir / "pipeline.pid"
+    pipeline_running = False
+    try:
+        if pid_file.exists():
+            pid = int(pid_file.read_text().strip())
+            if pid > 0:
+                try:
+                    os.kill(pid, 0)
+                    pipeline_running = True
+                except (ProcessLookupError, PermissionError):
+                    pass
+    except Exception:
+        pass
+    
+    # Dynamic refresh interval: 10 seconds when pipeline running, 5 minutes when stopped
+    refresh_interval = 10000 if pipeline_running else 300000
+    
+    st.markdown(f"""
     <script>
-    (function() {
-        const refreshInterval = 300000;
+    (function() {{
+        const refreshInterval = {refresh_interval};
         let refreshTimer = null;
+        const pipelineRunning = {str(pipeline_running).lower()};
         
-        function scheduleRefresh() {
-            if (refreshTimer) {
+        function scheduleRefresh() {{
+            if (refreshTimer) {{
                 clearTimeout(refreshTimer);
-            }
-            refreshTimer = setTimeout(function() {
+            }}
+            refreshTimer = setTimeout(function() {{
                 window.location.reload();
-            }, refreshInterval);
-        }
+            }}, refreshInterval);
+        }}
         
         scheduleRefresh();
         
-        window.addEventListener('focus', function() {
+        // More frequent refresh when pipeline is running
+        if (pipelineRunning) {{
+            // Also check every 10 seconds for updates
+            setInterval(function() {{
+                window.location.reload();
+            }}, refreshInterval);
+        }}
+        
+        window.addEventListener('focus', function() {{
             scheduleRefresh();
-        });
-    })();
+        }});
+    }})();
     </script>
     """, unsafe_allow_html=True)
                            
@@ -1255,14 +1283,7 @@ def main():
         return
     
                                                         
-    st.markdown(
-        """
-        <script>
-        setTimeout(function(){ window.location.reload(); }, 300000);
-        </script>
-        """,
-        unsafe_allow_html=True
-    )
+    # Removed duplicate refresh - handled above with dynamic interval based on pipeline status
     
                                    
     st.markdown(
