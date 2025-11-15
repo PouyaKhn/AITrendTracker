@@ -1128,10 +1128,6 @@ def main():
                                                          
     typeface_logo = base64.b64encode(open("images/5. typeface_#0f0f0f.png", "rb").read()).decode()
     
-    # No automatic refresh - will refresh automatically when pipeline completes
-                           
-    # Use relative URLs to work with any domain/IP
-    # Include base path for subdirectory deployment
     base_path = "/aitrendtracker"
     en_link = f"{base_path}/?lang=en"
     da_link = f"{base_path}/?lang=da"
