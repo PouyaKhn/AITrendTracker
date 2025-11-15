@@ -575,15 +575,13 @@ class ArticleDatabase:
             return {}
     
     def clear_all_data(self):
-        """Clear all data from the database - DANGEROUS OPERATION."""
+        """Clear all data from the database."""
         try:
-            # Use absolute path to ensure we're working with the correct database
             db_path_str = str(self.db_path.resolve())
             
             with sqlite3.connect(db_path_str) as conn:
                 cursor = conn.cursor()
                 
-                # Get counts before deletion for verification
                 cursor.execute("SELECT COUNT(*) FROM processed_articles")
                 processed_count = cursor.fetchone()[0]
                 cursor.execute("SELECT COUNT(*) FROM rejected_articles")
@@ -591,16 +589,13 @@ class ArticleDatabase:
                 cursor.execute("SELECT COUNT(*) FROM pipeline_runs")
                 runs_count = cursor.fetchone()[0]
                 
-                # Delete all data
                 cursor.execute("DELETE FROM processed_articles")
                 cursor.execute("DELETE FROM rejected_articles")
                 cursor.execute("DELETE FROM pipeline_runs")
                 cursor.execute("DELETE FROM daily_statistics")
                 
-                # Reset auto-increment sequences
                 cursor.execute("DELETE FROM sqlite_sequence WHERE name IN ('pipeline_runs', 'processed_articles', 'rejected_articles', 'daily_statistics')")
                 
-                # Verify deletion
                 cursor.execute("SELECT COUNT(*) FROM processed_articles")
                 remaining_processed = cursor.fetchone()[0]
                 cursor.execute("SELECT COUNT(*) FROM rejected_articles")
@@ -609,13 +604,10 @@ class ArticleDatabase:
                 remaining_runs = cursor.fetchone()[0]
                 
                 conn.commit()
-                
-                # VACUUM to reclaim space and optimize database
                 conn.execute("VACUUM")
                 
                 logger.warning(f"All database data has been cleared. Deleted: {processed_count} processed, {rejected_count} rejected, {runs_count} runs")
                 
-                # Verify all data was deleted
                 if remaining_processed > 0 or remaining_rejected > 0 or remaining_runs > 0:
                     raise Exception(f"Failed to clear all data. Remaining: {remaining_processed} processed, {remaining_rejected} rejected, {remaining_runs} runs")
                 
