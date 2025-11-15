@@ -289,10 +289,10 @@ GDELT API → Fetcher → Processor → AI Classifier → Database → Dashboard
 
 **Key Features**:
 - Pipeline start/stop control (subprocess management)
-- Real-time statistics display with dynamic auto-refresh
+- Real-time statistics display with automatic refresh on batch completion
 - AI article browsing with pagination (10 per page)
 - Interactive charts and analytics
-- Dynamic auto-refresh: 10 seconds when pipeline running, 5 minutes when stopped
+- Automatic refresh when pipeline completes each batch run (every 2 hours in continuous mode)
 - Process management (PID tracking)
 - Multilingual support (English/Danish)
 - Language selection in UI via flag icons
