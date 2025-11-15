@@ -1608,7 +1608,7 @@ def main():
     current_pid = _read_pid()
     is_running = _is_pid_running(current_pid)
     
-    # Check if pipeline just finished (was running, now stopped)
+    # Check if pipeline just finished (was running, now stopped) - for when pipeline is stopped
     if 'pipeline_was_running' not in st.session_state:
         st.session_state.pipeline_was_running = False
     
@@ -1622,16 +1622,41 @@ def main():
     # Update the state for next check
     st.session_state.pipeline_was_running = is_running
     
+    # Check for new completed pipeline runs (for continuous mode - detects each 2-hour batch completion)
+    if is_running:
+        try:
+            from database import get_database as _get_db
+            _db = _get_db()
+            recent_runs = _db.get_recent_pipeline_runs(limit=1)
+            
+            if recent_runs and len(recent_runs) > 0:
+                latest_run = recent_runs[0]
+                latest_completed_at = latest_run.get('run_completed_at')
+                
+                # Initialize last known completed run
+                if 'last_completed_run_time' not in st.session_state:
+                    st.session_state.last_completed_run_time = latest_completed_at
+                
+                # If we have a new completed run, refresh!
+                if latest_completed_at and latest_completed_at != st.session_state.last_completed_run_time:
+                    st.session_state.last_completed_run_time = latest_completed_at
+                    # New batch completed - refresh to show new stats
+                    time.sleep(0.5)  # Small delay to ensure data is written
+                    st.rerun()
+        except Exception as e:
+            # Silently handle errors - don't break the app if database check fails
+            pass
+    
     # Lightweight periodic check: only rerun if pipeline might have finished
     # This allows detection without constant refreshing
     if 'last_pipeline_check' not in st.session_state:
         st.session_state.last_pipeline_check = time.time()
     
-    # Check every 10 seconds if pipeline finished (lightweight, only triggers rerun if needed)
+    # Check every 10 seconds if pipeline finished or new batch completed (lightweight, only triggers rerun if needed)
     current_time = time.time()
     if current_time - st.session_state.last_pipeline_check > 10:
         st.session_state.last_pipeline_check = current_time
-        # Only rerun if pipeline was running (to check if it finished)
+        # Only rerun if pipeline was running (to check if it finished or new batch completed)
         if st.session_state.pipeline_was_running:
             st.rerun()
                        
