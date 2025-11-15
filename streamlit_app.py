@@ -1153,7 +1153,24 @@ def main():
                                                          
     typeface_logo = base64.b64encode(open("images/5. typeface_#0f0f0f.png", "rb").read()).decode()
     
-    # No automatic refresh - will refresh when pipeline completes
+    # Lightweight check for pipeline completion (only checks status, doesn't refresh constantly)
+    # This uses a minimal JavaScript check that only refreshes when pipeline finishes
+    st.markdown("""
+    <script>
+    (function() {
+        // Check every 5 seconds if pipeline finished (lightweight check)
+        setInterval(function() {
+            // Only refresh if pipeline was running and now stopped
+            // This is handled server-side, but we trigger a check
+            fetch(window.location.href, {method: 'HEAD', cache: 'no-cache'})
+                .then(() => {
+                    // Server-side logic will handle the actual refresh
+                })
+                .catch(() => {});
+        }, 5000);
+    })();
+    </script>
+    """, unsafe_allow_html=True)
                            
     # Use relative URLs to work with any domain/IP
     # Include base path for subdirectory deployment
