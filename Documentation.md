@@ -623,6 +623,58 @@ Ensure all required environment variables are set in your `.env` file:
 
 ## Codebase Structure
 
+### File-by-File Overview
+
+This section describes the purpose and functionality of each file in the codebase:
+
+#### Core Application Files
+
+- **`main.py`**: Main application entry point. Provides CLI interface with two modes: single batch (`--once`) and continuous scheduling (default, runs every 2 hours). Handles argument parsing, logging setup, and mode selection.
+
+- **`pipeline.py`**: Main orchestration module. Coordinates the end-to-end workflow: fetching articles from GDELT, processing and validating content, AI topic classification, database storage, and statistics collection. Implements unlimited mode support and language-aware duplicate removal.
+
+- **`fetcher.py`**: News article fetching module. Integrates with GDELT DOC 2.0 API to fetch worldwide news articles. Implements multi-library text extraction (Trafilatura, Goose3, Newspaper3k, Readability-lxml, BeautifulSoup) with fallback chain. Handles domain failure tracking, duplicate removal, and language detection.
+
+- **`processor.py`**: Article processing and validation module. Validates article data (required fields, content length, format), normalizes encoding (UTF-8, Unicode NFKC), generates content hashes for deduplication, and stores articles as JSON files with metadata.
+
+- **`ai_classifier.py`**: AI topic classification module. Uses LLM APIs (OpenAI GPT-4o-mini, Anthropic Claude 3.5 Haiku) to classify articles for AI-related content. Provides fallback keyword-based classification when APIs are unavailable. Categorizes articles into 14 AI topic categories with confidence scoring.
+
+- **`database.py`**: SQLite database management module. Handles article storage, deduplication, pipeline run tracking, statistics aggregation, and data cleanup. Provides queries for dashboard analytics and article retrieval. Manages database schema and indexes.
+
+- **`scheduler.py`**: Task scheduling module. Implements automated execution management for continuous pipeline operation. Handles configurable interval scheduling (default: 2 hours), graceful shutdown (SIGINT, SIGTERM), job re-registration on failure, and unlimited mode enforcement.
+
+- **`streamlit_app.py`**: Streamlit web dashboard application. Provides user interface for pipeline monitoring and control. Features include: pipeline start/stop controls, real-time statistics display, AI article browsing with pagination, interactive charts (topics, categories, trends), multilingual support (English/Danish), admin login system, and database management.
+
+- **`summaries.py`**: Article summary generation module. Generates and caches Danish summaries for articles using OpenAI API. Implements thread-safe client initialization, lazy loading, and fallback to English text when API is unavailable.
+
+#### Configuration and Support Files
+
+- **`config.py`**: Centralized configuration management. Loads settings from environment variables with sensible defaults. Manages storage directories, log paths, API keys, fetch intervals, article limits, and validation criteria. Provides singleton pattern for configuration access.
+
+- **`config/__init__.py`**: Module initialization file. Re-exports `load_config` from parent `config.py` to resolve import conflicts when both `config.py` file and `config/` directory exist.
+
+- **`config/languages.py`**: Multilingual translation support. Provides translation functions for UI elements, AI topics, domain categories, and time labels. Supports English (en) and Danish (da) languages. Implements language detection and session state management.
+
+- **`logger.py`**: Logging configuration module. Sets up comprehensive logging with Loguru (preferred) or standard Python logging fallback. Provides console and file output, log rotation (10MB, 5 backups), colorized console output, and structured logging format.
+
+- **`utils.py`**: Utility functions module. Provides helper functions for rate limiting, filename sanitization, content hashing (MD5), duration formatting, and text normalization.
+
+#### Deployment and Configuration Files
+
+- **`streamlit.service`**: Systemd service configuration file. Defines service settings for running Streamlit app as a background service on Linux. Includes working directory, environment variables, restart policy, and base path configuration.
+
+- **`nginx-ai-center.conf`**: Nginx reverse proxy configuration. Configures Nginx to proxy requests to Streamlit app with WebSocket support, subdirectory deployment (`/aitrendtracker`), and proper headers for real-time updates.
+
+- **`requirements.txt`**: Python package dependencies. Lists all required packages with version constraints for the project.
+
+- **`.gitignore`**: Git ignore rules. Specifies files and directories to exclude from version control (e.g., `.env`, `__pycache__/`, `venv/`, `*.log`, `data/`, `*.db`).
+
+#### Documentation Files
+
+- **`README.md`**: Project overview and quick start guide. Provides feature list, installation instructions, usage examples, environment variables, and troubleshooting tips.
+
+- **`Documentation.md`**: Comprehensive technical documentation. Detailed component analysis, architecture overview, API integration details, deployment instructions, and system requirements.
+
 ### Removed/Deprecated Components
 
 The following components have been removed as part of codebase cleanup:
