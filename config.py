@@ -1,9 +1,4 @@
-"""
-Configuration settings for the news scraping service.
-
-Centralizes all tunable parameters with environment variable overrides
-and automatic path creation.
-"""
+"""Configuration settings for the news scraping service."""
 
 import os
 from pathlib import Path

@@ -1,14 +1,4 @@
-"""News fetcher module for processing GDELT news data.
-
-This module provides functions to:
-- Fetch fresh worldwide news articles from GDELT DOC 2.0 API
-- Extract recent articles from GDELT events data
-- Process multiple languages and regions
-- Extract full text content using multi-library approach
-- Support unlimited mode fetching
-- Track domain failures persistently
-- Log key events and propagate exceptions
-"""
+"""News fetcher module for processing GDELT news data."""
 
 import time
 import requests

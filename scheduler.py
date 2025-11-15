@@ -37,11 +37,9 @@ def start_scheduler(job_fn: Callable = None):
     """Start the scheduler that runs job_fn at configured intervals."""
     global _shutdown_requested
     
-                                           
     config = load_config()
     fetch_interval = config.fetch_interval_minutes
     
-                                          
     if job_fn is None:
         job_fn = run_batch
     

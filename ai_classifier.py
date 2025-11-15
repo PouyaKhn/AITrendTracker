@@ -58,7 +58,6 @@ class APIBasedAITopicClassifier:
         """Initialize the API-based AI topic classifier."""
         self.logger = get_logger(__name__)
         
-                             
         self.ai_topics = [
             "AI Research and Development",
             "AI Ethics and Regulations", 
@@ -137,10 +136,8 @@ class APIBasedAITopicClassifier:
     def _classify_with_openai(self, text: str, title: str = "") -> AITopicResult:
         """Classify article using OpenAI API."""
         try:
-                                    
             full_text = f"Title: {title}\n\nContent: {text}".strip()
             
-                                                          
             prompt = f"""Analyze this article and determine if it is primarily about artificial intelligence (AI) or not.
 
 Article to analyze:
@@ -196,12 +193,10 @@ Respond only with the JSON format."""
                 except json.JSONDecodeError:
                     pass
             
-                                                       
             return self._parse_openai_response(response_text, full_text)
             
         except Exception as e:
             self.logger.error(f"OpenAI classification failed: {e}")
-                                               
             return self._classify_with_fallback(text, title)
     
     def _classify_with_anthropic(self, text: str, title: str = "") -> AITopicResult:

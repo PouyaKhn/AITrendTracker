@@ -142,7 +142,7 @@ def translate_summary_to_danish(
 
         return danish_summary, True
 
-    except Exception as exc:  # pragma: no cover - defensive path
+    except Exception as exc:
         logger.warning(f"Failed to translate summary for {url[:80]}: {exc}")
         cache[cache_key] = english_summary
         return english_summary, True
