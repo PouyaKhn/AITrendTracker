@@ -1,11 +1,4 @@
-"""
-Database module for tracking processed articles and pipeline state.
-
-Provides SQLite-based storage for:
-- Processed article URLs and metadata
-- Pipeline execution history
-- Statistics and metrics for future dashboard
-"""
+"""Database module for tracking processed articles and pipeline state."""
 
 import sqlite3
 import json

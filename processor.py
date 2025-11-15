@@ -1,12 +1,4 @@
-"""
-Article processing module for news scraping service.
-
-This module provides functions to:
-- Process article data (deduplication, HTML stripping, encoding enforcement)
-- Validate article data (required fields, content length, format)
-- Store articles as JSON files with metadata
-- Handle IO errors gracefully
-"""
+"""Article processing module for news scraping service."""
 
 import json
 import re
