@@ -130,7 +130,6 @@ class APIBasedAITopicClassifier:
         elif self.anthropic_client:
             return self._classify_with_anthropic(text, title)
         else:
-                                                             
             return self._classify_with_fallback(text, title)
     
     def _classify_with_openai(self, text: str, title: str = "") -> AITopicResult:
@@ -200,9 +199,7 @@ Respond only with the JSON format."""
             return self._classify_with_fallback(text, title)
     
     def _classify_with_anthropic(self, text: str, title: str = "") -> AITopicResult:
-        """
-        Classify using Anthropic Claude for true text understanding.
-        """
+        """Classify article using Anthropic API."""
         try:
                                     
             full_text = f"Title: {title}\n\nContent: {text}".strip()

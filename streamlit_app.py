@@ -1,12 +1,4 @@
-"""
-Streamlit Web Application for News Scraping Pipeline
-
-This application provides a web interface to:
-- Run the pipeline in unlimited mode
-- View pipeline output and logs
-- Monitor database statistics
-- Track pipeline performance
-"""
+"""Streamlit web application for news scraping pipeline dashboard."""
 
 import streamlit as st
 from datetime import datetime, timedelta
@@ -1088,7 +1080,6 @@ def admin_login_page():
         col1, col2, col3 = st.columns([1, 1, 1])
         with col2:
             if st.button(f"🔑 {t('login')}", type="primary", width='stretch'):
-                # Get admin credentials from environment variables
                 admin_username = os.getenv('ADMIN_USERNAME', '')
                 admin_password = os.getenv('ADMIN_PASSWORD', '')
                 
