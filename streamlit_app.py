@@ -27,15 +27,9 @@ import pandas as pd
 from collections import Counter, defaultdict
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
 load_dotenv()
 
-                                                                 
-
-                                   
 from database import get_database, reset_database_instance
-
-                               
 from config.languages import LANGUAGES, get_language, set_language, t, translate_ai_topic, translate_domain_category, translate_day_name, translate_month_name, translate_week_label
 from config import load_config
 
@@ -57,7 +51,7 @@ def normalize_ai_topic(topic: Any) -> str:
         return 'Other'
     return topic_str
 
-@st.cache_data(ttl=30)                             
+@st.cache_data(ttl=30)
 def get_ai_articles_by_topic(language: str = None) -> Dict[str, int]:
     """Get count of AI articles by AI topic."""
     try:
@@ -66,43 +60,37 @@ def get_ai_articles_by_topic(language: str = None) -> Dict[str, int]:
         if not ai_articles:
             return {}
         
-                                    
         topics = Counter()
         for article in ai_articles:
             topic = normalize_ai_topic(article.get('ai_topic'))
             if topic and topic != 'Other':
-                                                 
                 translated_topic = translate_ai_topic(topic)
                 topics[translated_topic] += 1
         
         return dict(topics)
         
-    except Exception as e:
-                                                        
+    except Exception:
         return {}
 
-@st.cache_data(ttl=30)                             
+@st.cache_data(ttl=30)
 def get_ai_articles_by_category(language: str = None) -> Dict[str, int]:
     """Get count of AI articles by category."""
     try:
         db = get_database()
-        ai_articles = db.get_recent_ai_articles(limit=10000)                    
+        ai_articles = db.get_recent_ai_articles(limit=10000)
         
         if not ai_articles:
             return {}
         
-                                    
         categories = Counter()
         for article in ai_articles:
             category = normalize_domain_category(article.get('domain_category'))
-                                                
             translated_category = translate_domain_category(category)
             categories[translated_category] += 1
         
         return dict(categories)
         
-    except Exception as e:
-                                                        
+    except Exception:
         return {}
 
 @st.cache_data(ttl=30)
@@ -143,7 +131,6 @@ def get_ai_articles_trend_data(time_period: str, language: str = None) -> Dict[s
                 if dt.date() in map_day:
                     bins[map_day[dt.date()]] += 1
             
-                                              
             translated_bins = {}
             for label, count in bins.items():
                 translated_label = translate_day_name(label)
@@ -166,7 +153,6 @@ def get_ai_articles_trend_data(time_period: str, language: str = None) -> Dict[s
                     else:
                         bins['Week 4'] += 1
             
-                                              
             translated_bins = {}
             for label, count in bins.items():
                 translated_label = translate_week_label(label)
@@ -181,7 +167,6 @@ def get_ai_articles_trend_data(time_period: str, language: str = None) -> Dict[s
                 if dt.year == y:
                     bins[calendar.month_name[dt.month]] += 1
             
-                                              
             translated_bins = {}
             for label, count in bins.items():
                 translated_label = translate_month_name(label)
@@ -202,7 +187,6 @@ def get_ai_articles_trend_data(time_period: str, language: str = None) -> Dict[s
     except Exception:
         return {}
 
-                                                                                    
 
 def get_ai_articles_with_content() -> List[Dict[str, Any]]:
     """Get AI articles with summaries and metadata from the database."""
@@ -1232,10 +1216,6 @@ def main():
         admin_login_page()
         return
     
-                                                        
-    # Removed duplicate refresh - handled above with dynamic interval based on pipeline status
-    
-                                   
     st.markdown(
         """
         <script>
@@ -1489,10 +1469,6 @@ def main():
         </script>
         """, unsafe_allow_html=True)
     
-                                               
-    
-                                                 
-    # Use config storage directory for PID files to ensure correct paths on server
     config = load_config()
     pid_file = config.storage_dir / "pipeline.pid"
     start_time_file = config.storage_dir / "pipeline_start.txt"
@@ -1531,37 +1507,20 @@ def main():
             env = os.environ.copy()
             env['MAX_ARTICLES'] = '0'
             
-            # Ensure .env file is loaded - read it directly and add to subprocess environment
             from dotenv import dotenv_values
             env_file = Path(__file__).parent / '.env'
             if env_file.exists():
-                # Read .env file directly and add all values to subprocess environment
                 env_vars = dotenv_values(env_file)
                 for key, value in env_vars.items():
-                    # Add all values - strip whitespace and handle empty strings
                     if value is not None:
-                        # Strip whitespace from values
                         value = str(value).strip()
-                        if value:  # Only add non-empty values
+                        if value:
                             env[key] = value
-                
-                # Debug: Log if API keys are being passed (without showing the actual keys)
-                openai_key_present = 'OPENAI_API_KEY' in env and env.get('OPENAI_API_KEY', '').strip()
-                anthropic_key_present = 'ANTHROPIC_API_KEY' in env and env.get('ANTHROPIC_API_KEY', '').strip()
-                print(f"[Pipeline Start] Environment check - OPENAI_API_KEY: {'✓' if openai_key_present else '✗'}, ANTHROPIC_API_KEY: {'✓' if anthropic_key_present else '✗'}")
-                if not openai_key_present and not anthropic_key_present:
-                    print(f"[Pipeline Start] WARNING: No API keys found in .env file or environment!")
-            else:
-                print(f"[Pipeline Start] WARNING: .env file not found at {env_file}")
-                                                                        
-            # Don't redirect stdout/stderr so pipeline logs appear in terminal
-            # Logs will also be written to the log file configured in config.py
+            
             proc = subprocess.Popen(
                 [sys.executable, 'main.py'],
                 cwd=Path(__file__).parent,
-                env=env,
-                # stdout and stderr are None by default, which means they inherit from parent
-                # This allows logs to appear in the Streamlit terminal
+                env=env
             )
             pid_file.parent.mkdir(parents=True, exist_ok=True)
             pid_file.write_text(str(proc.pid))
@@ -1608,21 +1567,16 @@ def main():
     current_pid = _read_pid()
     is_running = _is_pid_running(current_pid)
     
-    # Check if pipeline just finished (was running, now stopped) - for when pipeline is stopped
     if 'pipeline_was_running' not in st.session_state:
         st.session_state.pipeline_was_running = False
     
-    # If pipeline was running but now it's stopped, it just finished - refresh!
     if st.session_state.pipeline_was_running and not is_running:
         st.session_state.pipeline_was_running = False
-        # Pipeline just finished - refresh to show new stats
-        time.sleep(0.5)  # Small delay to ensure data is written
+        time.sleep(0.5)
         st.rerun()
     
-    # Update the state for next check
     st.session_state.pipeline_was_running = is_running
     
-    # Check for new completed pipeline runs (for continuous mode - detects each 2-hour batch completion)
     if is_running:
         try:
             from database import get_database as _get_db
@@ -1633,30 +1587,22 @@ def main():
                 latest_run = recent_runs[0]
                 latest_completed_at = latest_run.get('run_completed_at')
                 
-                # Initialize last known completed run
                 if 'last_completed_run_time' not in st.session_state:
                     st.session_state.last_completed_run_time = latest_completed_at
                 
-                # If we have a new completed run, refresh!
                 if latest_completed_at and latest_completed_at != st.session_state.last_completed_run_time:
                     st.session_state.last_completed_run_time = latest_completed_at
-                    # New batch completed - refresh to show new stats
-                    time.sleep(0.5)  # Small delay to ensure data is written
+                    time.sleep(0.5)
                     st.rerun()
-        except Exception as e:
-            # Silently handle errors - don't break the app if database check fails
+        except Exception:
             pass
     
-    # Lightweight periodic check: only rerun if pipeline might have finished
-    # This allows detection without constant refreshing
     if 'last_pipeline_check' not in st.session_state:
         st.session_state.last_pipeline_check = time.time()
     
-    # Check every 10 seconds if pipeline finished or new batch completed (lightweight, only triggers rerun if needed)
     current_time = time.time()
     if current_time - st.session_state.last_pipeline_check > 10:
         st.session_state.last_pipeline_check = current_time
-        # Only rerun if pipeline was running (to check if it finished or new batch completed)
         if st.session_state.pipeline_was_running:
             st.rerun()
                        
@@ -1666,10 +1612,9 @@ def main():
             start_time_val = start_time_file.read_text().strip()
     except Exception:
         start_time_val = None
-                                                               
+    
     last_update_val = None
     try:
-        # Use config storage directory for consistency
         data_dir = config.storage_dir
         json_files = list(data_dir.glob("articles_*.json"))
         if json_files:
@@ -1686,9 +1631,7 @@ def main():
         'error_message': ''
     }
     
-                                                                            
     if st.session_state.admin_logged_in:
-                               
         if status['status'] == 'running':
             st.success(f"🟢 {t('pipeline_running_with_interval')}")
             
@@ -1740,7 +1683,6 @@ def main():
                                     st.error("❌ Force stop also failed")
         
         with col3:
-            # Initialize session state for clear database confirmation
             if 'show_clear_confirm' not in st.session_state:
                 st.session_state['show_clear_confirm'] = False
             
@@ -1767,21 +1709,14 @@ def main():
                         with st.spinner("Clearing database..."):
                             try:
                                 db = get_database()
-                                
-                                # Get the data directory from the database path
                                 data_dir = db.db_path.parent.resolve()
                                 
-                                # Get counts before clearing for verification
                                 total_before = db.get_total_article_count()
                                 ai_before = db.get_ai_article_count()
                                 
-                                # Clear database first
                                 db.clear_all_data()
-                                
-                                # Reset database singleton to force fresh connection
                                 reset_database_instance()
                                 
-                                # Verify database was cleared
                                 db_new = get_database()
                                 total_after = db_new.get_total_article_count()
                                 ai_after = db_new.get_ai_article_count()
@@ -1789,7 +1724,6 @@ def main():
                                 if total_after > 0 or ai_after > 0:
                                     raise Exception(f"Database not fully cleared! Remaining: {total_after} total, {ai_after} AI articles")
                                 
-                                # Delete all JSON files (articles, metadata, danish summaries)
                                 json_files = list(data_dir.glob("articles_*.json"))
                                 metadata_files = list(data_dir.glob("metadata_*.json"))
                                 danish_summaries_file = data_dir / "danish_summaries.json"
@@ -1800,28 +1734,21 @@ def main():
                                         file.unlink()
                                         deleted_files += 1
                                 
-                                # Delete danish summaries file
                                 if danish_summaries_file.exists():
                                     danish_summaries_file.unlink()
                                     deleted_files += 1
                                 
-                                # Clear ALL Streamlit caches (data and resource)
-                                # This clears all cached data including all @st.cache_data functions
                                 try:
                                     st.cache_data.clear()
-                                except Exception as cache_error:
-                                    print(f"Warning: Could not clear cache_data: {cache_error}")
+                                except Exception:
+                                    pass
                                 
                                 try:
                                     if hasattr(st, 'cache_resource'):
                                         st.cache_resource.clear()
-                                except Exception as cache_error:
-                                    print(f"Warning: Could not clear cache_resource: {cache_error}")
+                                except Exception:
+                                    pass
                                 
-                                # Note: st.cache is deprecated and doesn't have a .clear() method
-                                # Only st.cache_data and st.cache_resource have .clear() methods
-                                
-                                # Set session state to force refresh
                                 st.session_state['db_cleared'] = True
                                 st.session_state['last_clear_time'] = time.time()
                                 
@@ -1835,24 +1762,21 @@ def main():
                                 error_details = traceback.format_exc()
                                 st.error(f"❌ Failed to clear database: {str(e)}")
                                 st.code(error_details, language="python")
-                                print(f"Database clear error: {error_details}")  # Log to console
+                                print(f"Database clear error: {error_details}")
                 
                 with confirm_col2:
                     if st.button(f"❌ {t('cancel')}", type="secondary", width='stretch'):
                         st.session_state['show_clear_confirm'] = False
                         st.rerun()
     else:
-                                             
         if status['status'] == 'running':
             st.success(f"🟢 {t('pipeline_running_with_interval')}")
         elif status['status'] == 'error':
             st.error(f"🔴 {t('pipeline_error')} - {status.get('error_message', t('unknown_error'))}")
     
-                        
     st.markdown("---")
     st.subheader(t("live_statistics"))
     
-                    
     from database import get_database as _get_db
     try:
         _db = _get_db()
@@ -1868,7 +1792,6 @@ def main():
             ai_topics_detected = 0
         live_stats = _Stats()
     
-                                
     col1, col2 = st.columns(2)
     
     with col1:

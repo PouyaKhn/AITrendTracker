@@ -1,13 +1,9 @@
-#!/usr/bin/env python3
 """
 Main application entry point for the news scraping pipeline.
 
-This script provides two modes:
-1. Single batch mode (--once): Runs pipeline.run_batch() once
-2. Continuous mode (default): Runs scheduler.start_scheduler(pipeline.run_batch) with configurable intervals
-
-The application includes comprehensive logging (rotating file + console) and graceful shutdown handling.
-Supports unlimited mode when MAX_ARTICLES=0.
+Modes:
+- Single batch: python main.py --once
+- Continuous: python main.py (runs every 2 hours by default)
 """
 
 import argparse
