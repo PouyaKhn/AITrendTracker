@@ -1,8 +1,7 @@
 """
 Summary and translation utilities for article processing.
 
-Provides helper functions for generating and caching Danish summaries so the
-Streamlit UI can display pre-computed content without introducing latency.
+Provides functions for generating and caching Danish summaries.
 """
 
 from __future__ import annotations
@@ -46,7 +45,7 @@ def _get_openai_client():
         try:
             _openai_client = openai.OpenAI(api_key=api_key)
             logger.debug("OpenAI client initialised for Danish summaries")
-        except Exception as exc:  # pragma: no cover - defensive logging
+        except Exception as exc:
             logger.warning(f"Failed to initialise OpenAI client for summaries: {exc}")
             _openai_client = None
 
@@ -139,7 +138,6 @@ def translate_summary_to_danish(
 
         cache[cache_key] = danish_summary
 
-        # Small sleep to respect rate limits when called in loops
         time.sleep(0.1)
 
         return danish_summary, True

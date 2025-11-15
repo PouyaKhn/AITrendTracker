@@ -1,14 +1,7 @@
-#!/usr/bin/env python3
 """
-API-Based AI Topic Classification Module
+API-based AI topic classification module.
 
-This module provides highly accurate AI topic detection using API-based LLMs
-for true text understanding rather than keyword matching.
-
-Supports:
-- OpenAI GPT-4o-mini (recommended)
-- Anthropic Claude 3.5 Haiku
-- Fallback to local models when API is unavailable
+Provides AI topic detection using LLM APIs with keyword-based fallback.
 """
 
 import os
@@ -59,12 +52,7 @@ class AITopicResult:
 
 
 class APIBasedAITopicClassifier:
-    """
-    API-Based AI Topic Classifier using powerful LLMs for true text understanding.
-    
-    Uses OpenAI GPT-4o-mini or Anthropic Claude for accurate classification
-    based on full article understanding, not keyword matching.
-    """
+    """API-based AI topic classifier using LLM APIs."""
     
     def __init__(self):
         """Initialize the API-based AI topic classifier."""
@@ -101,7 +89,6 @@ class APIBasedAITopicClassifier:
         openai_api_key = os.getenv('OPENAI_API_KEY')
         anthropic_api_key = os.getenv('ANTHROPIC_API_KEY')
         
-        # Debug logging (without exposing actual keys)
         self.logger.info(f"API Key Check - OPENAI_API_KEY present: {bool(openai_api_key and openai_api_key.strip())}, "
                         f"ANTHROPIC_API_KEY present: {bool(anthropic_api_key and anthropic_api_key.strip())}")
         
@@ -148,9 +135,7 @@ class APIBasedAITopicClassifier:
             return self._classify_with_fallback(text, title)
     
     def _classify_with_openai(self, text: str, title: str = "") -> AITopicResult:
-        """
-        Classify using OpenAI GPT-4o-mini for true text understanding.
-        """
+        """Classify article using OpenAI API."""
         try:
                                     
             full_text = f"Title: {title}\n\nContent: {text}".strip()
@@ -191,14 +176,12 @@ Respond only with the JSON format."""
                     {"role": "system", "content": "You are an expert AI researcher who can accurately classify whether articles are about artificial intelligence topics or not."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.1,                                          
+                temperature=0.1,
                 max_tokens=300
             )
             
-                                
             response_text = response.choices[0].message.content.strip()
             
-                                                   
             json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
             if json_match:
                 try:
@@ -358,17 +341,13 @@ Respond in JSON format:
             if keyword in text_lower:
                 found_keywords.append(keyword)
         
-        return found_keywords[:5]                  
+        return found_keywords[:5]
     
     def _classify_with_fallback(self, text: str, title: str = "") -> AITopicResult:
-        """
-        Fallback classification when no API is available.
-        Uses conservative keyword-based approach.
-        """
+        """Fallback classification using keyword matching."""
         full_text = f"{title} {text}"
         text_lower = full_text.lower()
         
-                                                  
         core_ai_terms = [
             'artificial intelligence', 'machine learning', 'deep learning', 'neural network',
             'openai', 'chatgpt', 'gpt-4', 'gpt4', 'claude', 'transformer', 'llm', 
@@ -376,11 +355,8 @@ Respond in JSON format:
             'generative ai', 'ai model', 'ai system', 'ai research', 'ai technology'
         ]
         
-                        
         ai_count = sum(1 for term in core_ai_terms if term in text_lower)
-        
-                                     
-        is_ai_topic = ai_count >= 3                               
+        is_ai_topic = ai_count >= 3
         confidence = min(0.8, 0.4 + (ai_count * 0.1))
         
         topic = None

@@ -52,14 +52,7 @@ def _is_danish_article(article) -> bool:
 
 
 def run_batch():
-    """
-    Orchestrate the fetching and processing of articles with database tracking.
-    
-    Only processes real articles from GDELT. If no articles are available,
-    the batch run will complete with zero articles processed.
-    
-    Supports unlimited mode when MAX_ARTICLES=0.
-    """
+    """Orchestrate article fetching, processing, and database storage."""
     db = init_database()
     config = load_config()
 
@@ -270,7 +263,6 @@ def run_batch():
         else:
             stats["ai_topic_count"] = 0
 
-        # Precompute summaries for AI articles to avoid delays in the UI
         for article in processed_articles:
             analysis = article.get("ai_topic_analysis", {}) or {}
 
