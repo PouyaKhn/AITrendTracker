@@ -302,7 +302,7 @@ GDELT API → Fetcher → Processor → AI Classifier → Database → Dashboard
 
 **Dashboard Components**:
 - **Control Panel**: Start/stop pipeline, status indicators, language selection
-- **Live Statistics**: Real-time metrics and counters with dynamic refresh
+- **Live Statistics**: Real-time metrics and counters with automatic refresh on batch completion
 - **Article Browser**: Paginated AI article list with expandable details and summaries
 - **Analytics Charts**: Topic distribution, category analysis, trend analysis
 - **Status Monitoring**: Process health and error reporting
