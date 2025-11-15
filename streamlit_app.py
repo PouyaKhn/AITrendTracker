@@ -1615,10 +1615,25 @@ def main():
     # If pipeline was running but now it's stopped, it just finished - refresh!
     if st.session_state.pipeline_was_running and not is_running:
         st.session_state.pipeline_was_running = False
+        # Pipeline just finished - refresh to show new stats
+        time.sleep(0.5)  # Small delay to ensure data is written
         st.rerun()
     
     # Update the state for next check
     st.session_state.pipeline_was_running = is_running
+    
+    # Lightweight periodic check: only rerun if pipeline might have finished
+    # This allows detection without constant refreshing
+    if 'last_pipeline_check' not in st.session_state:
+        st.session_state.last_pipeline_check = time.time()
+    
+    # Check every 10 seconds if pipeline finished (lightweight, only triggers rerun if needed)
+    current_time = time.time()
+    if current_time - st.session_state.last_pipeline_check > 10:
+        st.session_state.last_pipeline_check = current_time
+        # Only rerun if pipeline was running (to check if it finished)
+        if st.session_state.pipeline_was_running:
+            st.rerun()
                        
     start_time_val = None
     try:
