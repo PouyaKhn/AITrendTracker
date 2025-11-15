@@ -10,12 +10,16 @@ A practical system that fetches recent news articles from GDELT, classifies AI-r
 - **SQLite Storage**: Efficient local database with deduplication and analytics
 - **Streamlit Dashboard**: Interactive web interface with:
   - Pipeline start/stop controls
-  - Live statistics and metrics
+  - Live statistics and metrics with dynamic auto-refresh (10 seconds when pipeline running, 5 minutes when stopped)
   - Paginated AI article browser
   - Interactive trend charts (hourly, daily, weekly, monthly, yearly)
   - Multilingual support (English/Danish)
+  - Admin login for pipeline management and database operations
+  - Database clearing functionality
+- **Article Summaries**: Pre-computed Danish summaries for articles using OpenAI
 - **Domain Failure Tracking**: Persistent blacklisting of problematic domains
 - **Comprehensive Logging**: Rotating log files with detailed execution tracking
+- **Production Ready**: Systemd service configuration and Nginx reverse proxy support
 
 ## Quick Start
 
@@ -55,13 +59,16 @@ Open `http://localhost:8501` in your browser.
 
 - **START**: Runs the pipeline in the background as a separate process
 - **STOP**: Terminates the running pipeline
-- **Refresh Stats**: Manually update statistics (auto-refreshes every 5 minutes)
-- **Language Selection**: Switch between English and Danish interface
+- **Auto-Refresh**: Automatically refreshes every 10 seconds when pipeline is running, 5 minutes when stopped
+- **Language Selection**: Switch between English and Danish interface using flag icons
+- **Admin Login**: Access admin controls by clicking the login button (requires ADMIN_USERNAME and ADMIN_PASSWORD)
+- **Database Management**: Clear database functionality available in admin panel
 
 ### Dashboard Features
 
 - **Live Statistics**: Total articles, AI articles, processing rates, success rates
 - **AI Article Browser**: Paginated list (10 per page) with expandable details
+- **Article Summaries**: Pre-computed Danish summaries for articles
 - **Interactive Charts**:
   - AI Topics Distribution (bar chart)
   - Articles by Domain Category (bar chart)
@@ -71,6 +78,7 @@ Open `http://localhost:8501` in your browser.
     - Weekly: Weeks 1-4 of current month
     - Monthly: January-December of current year
     - Yearly: From 2025 onward
+- **Admin Panel**: Pipeline controls, database management, and system monitoring
 
 ## Command Line Interface
 
@@ -105,6 +113,7 @@ The pipeline runs every 2 hours (configurable via `FETCH_INTERVAL`).
 - **`database.py`**: SQLite schema, queries, and analytics
 - **`scheduler.py`**: Background scheduling for continuous operation
 - **`streamlit_app.py`**: Web dashboard and pipeline process management
+- **`summaries.py`**: Article summary generation and caching
 - **`config.py`**: Centralized configuration with environment variable support
 - **`logger.py`**: Logging setup (Loguru or standard logging)
 - **`utils.py`**: Helper functions (rate limiting, hashing, text normalization)
@@ -117,6 +126,39 @@ GDELT API → Fetcher → Processor → AI Classifier → Database → Dashboard
     ↓           ↓         ↓           ↓            ↓         ↓
   Articles → Validation → LLM API → SQLite → Streamlit UI
 ```
+
+## Production Deployment
+
+### Systemd Service
+
+The application can be run as a systemd service. A sample service file (`streamlit.service`) is provided for deployment on Linux servers.
+
+**Service Configuration**:
+- Runs as a background service
+- Automatic restart on failure
+- Supports base path configuration for subdirectory deployment
+- Logs to systemd journal
+
+### Nginx Reverse Proxy
+
+For production deployment with a custom domain, use Nginx as a reverse proxy. A sample configuration (`nginx-ai-center.conf`) is provided.
+
+**Features**:
+- WebSocket support for real-time updates
+- HTTPS support with Let's Encrypt
+- Subdirectory deployment support (e.g., `/aitrendtracker`)
+- Static file serving
+
+### Deployment Steps
+
+1. **Clone repository** on your server
+2. **Set up environment variables** in `.env` file
+3. **Install dependencies**: `pip install -r requirements.txt`
+4. **Configure systemd service** (see `streamlit.service`)
+5. **Configure Nginx** (see `nginx-ai-center.conf`)
+6. **Start service**: `sudo systemctl start streamlit`
+
+For detailed deployment instructions, see `Documentation.md`.
 
 ## Data Storage
 
@@ -185,11 +227,15 @@ sqlite3 data/processed_articles.db "SELECT COUNT(*) FROM processed_articles;"
 sqlite3 data/processed_articles.db "SELECT title, domain, processed_at FROM processed_articles ORDER BY processed_at DESC LIMIT 10;"
 ```
 
+### Admin Login Not Working
+
+Ensure `ADMIN_USERNAME` and `ADMIN_PASSWORD` are set in your `.env` file or as environment variables. The admin login button will not appear if credentials are not configured.
+
 ## Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `OPENAI_API_KEY` | OpenAI API key for classification | None |
+| `OPENAI_API_KEY` | OpenAI API key for classification and summaries | None |
 | `ANTHROPIC_API_KEY` | Anthropic API key for classification | None |
 | `FETCH_INTERVAL` | Minutes between pipeline runs | 120 |
 | `MAX_ARTICLES` | Maximum articles per batch (0 = unlimited) | 0 |
