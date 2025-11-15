@@ -1153,57 +1153,7 @@ def main():
                                                          
     typeface_logo = base64.b64encode(open("images/5. typeface_#0f0f0f.png", "rb").read()).decode()
     
-    # Check pipeline status for dynamic refresh
-    config = load_config()
-    pid_file = config.storage_dir / "pipeline.pid"
-    pipeline_running = False
-    try:
-        if pid_file.exists():
-            pid = int(pid_file.read_text().strip())
-            if pid > 0:
-                try:
-                    os.kill(pid, 0)
-                    pipeline_running = True
-                except (ProcessLookupError, PermissionError):
-                    pass
-    except Exception:
-        pass
-    
-    # Dynamic refresh interval: 10 seconds when pipeline running, 5 minutes when stopped
-    refresh_interval = 10000 if pipeline_running else 300000
-    
-    st.markdown(f"""
-    <script>
-    (function() {{
-        const refreshInterval = {refresh_interval};
-        let refreshTimer = null;
-        const pipelineRunning = {str(pipeline_running).lower()};
-        
-        function scheduleRefresh() {{
-            if (refreshTimer) {{
-                clearTimeout(refreshTimer);
-            }}
-            refreshTimer = setTimeout(function() {{
-                window.location.reload();
-            }}, refreshInterval);
-        }}
-        
-        scheduleRefresh();
-        
-        // More frequent refresh when pipeline is running
-        if (pipelineRunning) {{
-            // Also check every 10 seconds for updates
-            setInterval(function() {{
-                window.location.reload();
-            }}, refreshInterval);
-        }}
-        
-        window.addEventListener('focus', function() {{
-            scheduleRefresh();
-        }});
-    }})();
-    </script>
-    """, unsafe_allow_html=True)
+    # No automatic refresh - will refresh when pipeline completes
                            
     # Use relative URLs to work with any domain/IP
     # Include base path for subdirectory deployment
@@ -1657,6 +1607,18 @@ def main():
                               
     current_pid = _read_pid()
     is_running = _is_pid_running(current_pid)
+    
+    # Check if pipeline just finished (was running, now stopped)
+    if 'pipeline_was_running' not in st.session_state:
+        st.session_state.pipeline_was_running = False
+    
+    # If pipeline was running but now it's stopped, it just finished - refresh!
+    if st.session_state.pipeline_was_running and not is_running:
+        st.session_state.pipeline_was_running = False
+        st.rerun()
+    
+    # Update the state for next check
+    st.session_state.pipeline_was_running = is_running
                        
     start_time_val = None
     try:
