@@ -289,20 +289,24 @@ GDELT API → Fetcher → Processor → AI Classifier → Database → Dashboard
 
 **Key Features**:
 - Pipeline start/stop control (subprocess management)
-- Real-time statistics display
+- Real-time statistics display with dynamic auto-refresh
 - AI article browsing with pagination (10 per page)
 - Interactive charts and analytics
-- Auto-refresh capabilities (5-minute intervals)
+- Dynamic auto-refresh: 10 seconds when pipeline running, 5 minutes when stopped
 - Process management (PID tracking)
 - Multilingual support (English/Danish)
-- Language selection in UI
+- Language selection in UI via flag icons
+- Admin login system for protected operations
+- Database clearing functionality
+- Article summaries display
 
 **Dashboard Components**:
 - **Control Panel**: Start/stop pipeline, status indicators, language selection
-- **Live Statistics**: Real-time metrics and counters
-- **Article Browser**: Paginated AI article list with expandable details
+- **Live Statistics**: Real-time metrics and counters with dynamic refresh
+- **Article Browser**: Paginated AI article list with expandable details and summaries
 - **Analytics Charts**: Topic distribution, category analysis, trend analysis
 - **Status Monitoring**: Process health and error reporting
+- **Admin Panel**: Pipeline controls, database management, system monitoring
 
 **Chart Types**:
 - AI Topics Distribution (Bar chart)
@@ -336,12 +340,14 @@ GDELT API → Fetcher → Processor → AI Classifier → Database → Dashboard
 **Environment Variables**:
 - `FETCH_INTERVAL`: Minutes between runs (default: 120)
 - `MAX_ARTICLES`: Article limit (0 = unlimited, default)
-- `OPENAI_API_KEY`: OpenAI API access
-- `ANTHROPIC_API_KEY`: Anthropic API access
+- `OPENAI_API_KEY`: OpenAI API access (required for classification and summaries)
+- `ANTHROPIC_API_KEY`: Anthropic API access (optional, fallback)
 - `LOG_LEVEL`: Logging verbosity (DEBUG, INFO, WARNING, ERROR)
 - `STORAGE_DIR`: Data storage location (default: ./data)
 - `LOG_PATH`: Log file path (default: ./logs/news_scraper.log)
 - `MIN_ARTICLE_LENGTH`: Minimum article text length (default: 700)
+- `ADMIN_USERNAME`: Admin login username (required for admin access)
+- `ADMIN_PASSWORD`: Admin login password (required for admin access)
 
 **Core Functions**:
 - `load_config()`: Singleton configuration loader
@@ -382,7 +388,23 @@ GDELT API → Fetcher → Processor → AI Classifier → Database → Dashboard
 - `format_duration()`: Human-readable time formatting
 - `normalize_text()`: Text cleaning and whitespace normalization
 
-### 11. Language Support (`config/languages.py`)
+### 11. Summaries (`summaries.py`)
+
+**Purpose**: Article summary generation and caching for improved dashboard performance.
+
+**Key Features**:
+- Pre-computed Danish summaries using OpenAI API
+- Caching mechanism to avoid redundant API calls
+- Fallback to English text if API unavailable
+- Thread-safe client initialization
+- Lazy loading of OpenAI client
+
+**Core Functions**:
+- `get_or_generate_danish_summary()`: Get cached summary or generate new one
+- `_get_openai_client()`: Lazy initialization of OpenAI client
+- `_generate_summary_with_openai()`: Generate summary using OpenAI API
+
+### 12. Language Support (`config/languages.py`)
 
 **Purpose**: Multilingual interface translations.
 
@@ -477,9 +499,12 @@ logs/
 
 ### Access Control
 
-- **Local Access**: Streamlit dashboard (localhost by default)
+- **Admin Authentication**: Username/password-based admin login
+- **Environment Variables**: Admin credentials stored in environment variables (never in code)
+- **Local Access**: Streamlit dashboard (localhost by default in production)
 - **Process Isolation**: Separate subprocess execution
 - **File Permissions**: Standard Unix permissions
+- **HTTPS Support**: Recommended for production deployments
 
 ## Deployment
 
@@ -489,6 +514,7 @@ logs/
 - **Memory**: 2GB+ recommended
 - **Storage**: 10GB+ for data and logs
 - **Network**: Internet access for APIs
+- **Server**: Ubuntu/Debian Linux for production deployment (optional)
 
 ### Installation
 
@@ -505,13 +531,18 @@ export OPENAI_API_KEY=your_key
 export ANTHROPIC_API_KEY=your_key
 export FETCH_INTERVAL=120
 export MAX_ARTICLES=0
+export ADMIN_USERNAME=your_admin_username
+export ADMIN_PASSWORD=your_admin_password
 ```
 
 ### Running the System
 
 ```bash
-# Dashboard mode
-streamlit run streamlit_app.py
+# Dashboard mode (local development)
+streamlit run streamlit_app.py --server.port 8501
+
+# Dashboard mode (production with base path)
+streamlit run streamlit_app.py --server.port 8501 --server.address 127.0.0.1 --server.baseUrlPath=/aitrendtracker
 
 # CLI single batch
 python main.py --once
@@ -519,6 +550,53 @@ python main.py --once
 # CLI continuous mode
 python main.py
 ```
+
+### Production Deployment
+
+#### Systemd Service
+
+The application can be deployed as a systemd service for automatic startup and management:
+
+1. **Create service file**: Copy `streamlit.service` to `/etc/systemd/system/`
+2. **Update paths**: Modify `WorkingDirectory` and `ExecStart` paths
+3. **Enable service**: `sudo systemctl enable streamlit`
+4. **Start service**: `sudo systemctl start streamlit`
+5. **Check status**: `sudo systemctl status streamlit`
+
+**Service Features**:
+- Automatic restart on failure
+- Runs as background service
+- Logs to systemd journal
+- Supports base path configuration for subdirectory deployment
+
+#### Nginx Reverse Proxy
+
+For production deployment with custom domain and HTTPS:
+
+1. **Install Nginx**: `sudo apt install nginx`
+2. **Configure site**: Use `nginx-ai-center.conf` as template
+3. **Enable site**: `sudo ln -s /etc/nginx/sites-available/your-site /etc/nginx/sites-enabled/`
+4. **Test configuration**: `sudo nginx -t`
+5. **Reload Nginx**: `sudo systemctl reload nginx`
+
+**Nginx Features**:
+- WebSocket support for real-time dashboard updates
+- HTTPS support with Let's Encrypt
+- Subdirectory deployment (e.g., `/aitrendtracker`)
+- Static file serving
+- Reverse proxy to Streamlit on localhost
+
+#### Environment Variables for Production
+
+Ensure all required environment variables are set in your `.env` file:
+- `OPENAI_API_KEY`: Required for AI classification and summaries
+- `ANTHROPIC_API_KEY`: Optional, used as fallback
+- `ADMIN_USERNAME`: Required for admin access
+- `ADMIN_PASSWORD`: Required for admin access
+- `FETCH_INTERVAL`: Pipeline execution interval (default: 120 minutes)
+- `MAX_ARTICLES`: Article limit (0 = unlimited)
+- `STORAGE_DIR`: Data storage directory
+- `LOG_LEVEL`: Logging verbosity
 
 ## Monitoring and Maintenance
 
