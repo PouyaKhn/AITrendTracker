@@ -1683,8 +1683,7 @@ def main():
                         help="⚠️ WARNING: This will permanently delete all articles, statistics, and history"):
                 st.session_state['show_clear_confirm'] = True
                 st.rerun()
-            
-            # Show confirmation UI if requested
+        
             if st.session_state.get('show_clear_confirm', False):
                 st.warning("⚠️ **DANGER ZONE** ⚠️")
                 st.error("This action will permanently delete ALL data:")

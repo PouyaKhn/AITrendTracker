@@ -165,7 +165,6 @@ An article should be considered AI-related if it primarily discusses artificial 
 
 Respond only with the JSON format."""
 
-                             
             response = self.openai_client.chat.completions.create(
                 model="gpt-4o-mini-2024-07-18",
                 messages=[
