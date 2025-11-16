@@ -1775,6 +1775,15 @@ def main():
         st.subheader(t("live_statistics"))
     with stats_header_col2:
         if st.button("🔄 " + t('refresh_stats'), key="refresh_stats", use_container_width=True):
+            try:
+                st.cache_data.clear()
+            except Exception:
+                pass
+            try:
+                if hasattr(st, 'cache_resource'):
+                    st.cache_resource.clear()
+            except Exception:
+                pass
             st.rerun()
     
     from database import get_database as _get_db
