@@ -1761,7 +1761,13 @@ def main():
             st.error(f"🔴 {t('pipeline_error')} - {status.get('error_message', t('unknown_error'))}")
     
     st.markdown("---")
-    st.subheader(t("live_statistics"))
+    
+    stats_header_col1, stats_header_col2 = st.columns([3, 1])
+    with stats_header_col1:
+        st.subheader(t("live_statistics"))
+    with stats_header_col2:
+        if st.button("🔄 " + t('refresh_stats'), key="refresh_stats", use_container_width=True):
+            st.rerun()
     
     from database import get_database as _get_db
     try:
