@@ -1587,10 +1587,18 @@ def main():
     if 'last_pipeline_check' not in st.session_state:
         st.session_state.last_pipeline_check = time.time()
     
+    if 'last_stats_refresh' not in st.session_state:
+        st.session_state.last_stats_refresh = time.time()
+    
     current_time = time.time()
     if current_time - st.session_state.last_pipeline_check > 10:
         st.session_state.last_pipeline_check = current_time
         if st.session_state.pipeline_was_running:
+            st.rerun()
+    
+    if is_running:
+        if current_time - st.session_state.last_stats_refresh > 30:
+            st.session_state.last_stats_refresh = current_time
             st.rerun()
                        
     start_time_val = None
