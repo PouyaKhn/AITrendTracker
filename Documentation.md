@@ -289,10 +289,10 @@ GDELT API → Fetcher → Processor → AI Classifier → Database → Dashboard
 
 **Key Features**:
 - Pipeline start/stop control (subprocess management)
-- Real-time statistics display with automatic refresh on batch completion
+- Real-time statistics display with automatic refresh (every 30 seconds when pipeline is running, and when pipeline completes each batch run)
+- Manual refresh button to refresh all data (stats, charts, articles)
 - AI article browsing with pagination (10 per page)
 - Interactive charts and analytics
-- Automatic refresh when pipeline completes each batch run (every 2 hours in continuous mode)
 - Process management (PID tracking)
 - Multilingual support (English/Danish)
 - Language selection in UI via flag icons
@@ -302,11 +302,15 @@ GDELT API → Fetcher → Processor → AI Classifier → Database → Dashboard
 
 **Dashboard Components**:
 - **Control Panel**: Start/stop pipeline, status indicators, language selection
-- **Live Statistics**: Real-time metrics and counters with automatic refresh on batch completion
+- **Live Statistics**: Real-time metrics and counters with automatic refresh (every 30 seconds when running, and on batch completion) and manual refresh button
 - **Article Browser**: Paginated AI article list with expandable details and summaries
 - **Analytics Charts**: Topic distribution, category analysis, trend analysis
 - **Status Monitoring**: Process health and error reporting
 - **Admin Panel**: Pipeline controls, database management, system monitoring
+
+**Refresh Mechanisms**:
+- **Automatic Refresh**: Dashboard automatically refreshes every 30 seconds when pipeline is running, and immediately when pipeline completes each batch run (detected via database changes)
+- **Manual Refresh**: "🔄 Refresh Stats" button clears all caches (`st.cache_data` and `st.cache_resource`) and refreshes all data (stats, charts, and articles)
 
 **Chart Types**:
 - AI Topics Distribution (Bar chart)
@@ -581,10 +585,45 @@ For production deployment with custom domain and HTTPS:
 
 **Nginx Features**:
 - WebSocket support for real-time dashboard updates
-- HTTPS support with Let's Encrypt
+- HTTPS support with Let's Encrypt (via Certbot)
 - Subdirectory deployment (e.g., `/aitrendtracker`)
 - Static file serving
 - Reverse proxy to Streamlit on localhost
+
+#### HTTPS Setup with Let's Encrypt
+
+To enable HTTPS for your domain using Let's Encrypt:
+
+1. **Install Certbot**:
+   ```bash
+   sudo apt update
+   sudo apt install certbot python3-certbot-nginx -y
+   ```
+
+2. **Obtain SSL Certificate**:
+   ```bash
+   sudo certbot --nginx -d your-domain.com -d www.your-domain.com
+   ```
+
+Certbot will automatically:
+- Obtain free SSL certificates from Let's Encrypt
+- Update your existing `nginx-ai-center.conf` configuration
+- Set up automatic renewal (certificates renew every 90 days)
+- Configure HTTP to HTTPS redirect
+- Configure modern TLS protocols and ciphers
+
+**Certificate Renewal**:
+- Certificates automatically renew via systemd timer
+- Test renewal: `sudo certbot renew --dry-run`
+- Check renewal status: `sudo systemctl status certbot.timer`
+
+**Firewall Configuration**:
+Ensure ports 80 and 443 are open:
+```bash
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw reload
+```
 
 #### Environment Variables for Production
 
@@ -663,7 +702,7 @@ This section describes the purpose and functionality of each file in the codebas
 
 - **`streamlit.service`**: Systemd service configuration file. Defines service settings for running Streamlit app as a background service on Linux. Includes working directory, environment variables, restart policy, and base path configuration.
 
-- **`nginx-ai-center.conf`**: Nginx reverse proxy configuration. Configures Nginx to proxy requests to Streamlit app with WebSocket support, subdirectory deployment (`/aitrendtracker`), and proper headers for real-time updates.
+- **`nginx-ai-center.conf`**: Nginx reverse proxy configuration template. Configures Nginx to proxy requests to Streamlit app with WebSocket support, subdirectory deployment (`/aitrendtracker`), and proper headers for real-time updates. When using Certbot for HTTPS, this file will be automatically modified to include SSL configuration.
 
 - **`requirements.txt`**: Python package dependencies. Lists all required packages with version constraints for the project.
 

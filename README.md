@@ -10,7 +10,8 @@ A practical system that fetches recent news articles from GDELT, classifies AI-r
 - **SQLite Storage**: Efficient local database with deduplication and analytics
 - **Streamlit Dashboard**: Interactive web interface with:
   - Pipeline start/stop controls
-  - Live statistics and metrics with automatic refresh when pipeline completes each batch run
+  - Live statistics and metrics with automatic refresh (every 30 seconds when pipeline is running, and when pipeline completes each batch run)
+  - Manual refresh button to refresh all data (stats, charts, articles)
   - Paginated AI article browser
   - Interactive trend charts (hourly, daily, weekly, monthly, yearly)
   - Multilingual support (English/Danish)
@@ -59,7 +60,8 @@ Open `http://localhost:8501` in your browser.
 
 - **START**: Runs the pipeline in the background as a separate process
 - **STOP**: Terminates the running pipeline
-- **Auto-Refresh**: Automatically refreshes when pipeline completes each batch run (every 2 hours in continuous mode)
+- **Auto-Refresh**: Automatically refreshes every 30 seconds when pipeline is running, and when pipeline completes each batch run (every 2 hours in continuous mode)
+- **Manual Refresh**: Click the "🔄 Refresh Stats" button to refresh all data (stats, charts, and articles)
 - **Language Selection**: Switch between English and Danish interface using flag icons
 - **Admin Login**: Access admin controls by clicking the login button (requires ADMIN_USERNAME and ADMIN_PASSWORD)
 - **Database Management**: Clear database functionality available in admin panel
@@ -145,9 +147,32 @@ For production deployment with a custom domain, use Nginx as a reverse proxy. A 
 
 **Features**:
 - WebSocket support for real-time updates
-- HTTPS support with Let's Encrypt
+- HTTPS support with Let's Encrypt (via Certbot)
 - Subdirectory deployment support (e.g., `/aitrendtracker`)
 - Static file serving
+
+### HTTPS Setup
+
+To enable HTTPS for your domain:
+
+1. **Install Certbot**:
+   ```bash
+   sudo apt update
+   sudo apt install certbot python3-certbot-nginx -y
+   ```
+
+2. **Obtain SSL Certificate**:
+   ```bash
+   sudo certbot --nginx -d your-domain.com -d www.your-domain.com
+   ```
+
+Certbot will automatically:
+- Obtain free SSL certificates from Let's Encrypt
+- Update your Nginx configuration
+- Set up automatic renewal
+- Redirect HTTP to HTTPS
+
+For detailed HTTPS setup instructions, see `Documentation.md`.
 
 ### Deployment Steps
 
@@ -156,7 +181,8 @@ For production deployment with a custom domain, use Nginx as a reverse proxy. A 
 3. **Install dependencies**: `pip install -r requirements.txt`
 4. **Configure systemd service** (see `streamlit.service`)
 5. **Configure Nginx** (see `nginx-ai-center.conf`)
-6. **Start service**: `sudo systemctl start streamlit`
+6. **Set up HTTPS** (optional, see HTTPS Setup above)
+7. **Start service**: `sudo systemctl start streamlit`
 
 For detailed deployment instructions, see `Documentation.md`.
 
