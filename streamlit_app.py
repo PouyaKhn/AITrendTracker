@@ -1557,49 +1557,7 @@ def main():
     if 'pipeline_was_running' not in st.session_state:
         st.session_state.pipeline_was_running = False
     
-    if st.session_state.pipeline_was_running and not is_running:
-        st.session_state.pipeline_was_running = False
-        time.sleep(0.5)
-        st.rerun()
-    
     st.session_state.pipeline_was_running = is_running
-    
-    if is_running:
-        try:
-            from database import get_database as _get_db
-            _db = _get_db()
-            recent_runs = _db.get_recent_pipeline_runs(limit=1)
-            
-            if recent_runs and len(recent_runs) > 0:
-                latest_run = recent_runs[0]
-                latest_completed_at = latest_run.get('run_completed_at')
-                
-                if 'last_completed_run_time' not in st.session_state:
-                    st.session_state.last_completed_run_time = latest_completed_at
-                
-                if latest_completed_at and latest_completed_at != st.session_state.last_completed_run_time:
-                    st.session_state.last_completed_run_time = latest_completed_at
-                    time.sleep(0.5)
-                    st.rerun()
-        except Exception:
-            pass
-    
-    if 'last_pipeline_check' not in st.session_state:
-        st.session_state.last_pipeline_check = time.time()
-    
-    if 'last_stats_refresh' not in st.session_state:
-        st.session_state.last_stats_refresh = time.time()
-    
-    current_time = time.time()
-    if current_time - st.session_state.last_pipeline_check > 10:
-        st.session_state.last_pipeline_check = current_time
-        if st.session_state.pipeline_was_running:
-            st.rerun()
-    
-    if is_running:
-        if current_time - st.session_state.last_stats_refresh > 30:
-            st.session_state.last_stats_refresh = current_time
-            st.rerun()
                        
     start_time_val = None
     try:
