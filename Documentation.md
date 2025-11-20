@@ -289,7 +289,7 @@ GDELT API → Fetcher → Processor → AI Classifier → Database → Dashboard
 
 **Key Features**:
 - Pipeline start/stop control (subprocess management)
-- Real-time statistics display with automatic refresh (every 30 seconds when pipeline is running, and when pipeline completes each batch run)
+- Real-time statistics display with manual refresh button
 - Manual refresh button to refresh all data (stats, charts, articles)
 - AI article browsing with pagination (10 per page)
 - Interactive charts and analytics
@@ -302,15 +302,14 @@ GDELT API → Fetcher → Processor → AI Classifier → Database → Dashboard
 
 **Dashboard Components**:
 - **Control Panel**: Start/stop pipeline, status indicators, language selection
-- **Live Statistics**: Real-time metrics and counters with automatic refresh (every 30 seconds when running, and on batch completion) and manual refresh button
+- **Live Statistics**: Real-time metrics and counters with manual refresh button
 - **Article Browser**: Paginated AI article list with expandable details and summaries
 - **Analytics Charts**: Topic distribution, category analysis, trend analysis
 - **Status Monitoring**: Process health and error reporting
 - **Admin Panel**: Pipeline controls, database management, system monitoring
 
-**Refresh Mechanisms**:
-- **Automatic Refresh**: Dashboard automatically refreshes every 30 seconds when pipeline is running, and immediately when pipeline completes each batch run (detected via database changes)
-- **Manual Refresh**: "🔄 Refresh Stats" button clears all caches (`st.cache_data` and `st.cache_resource`) and refreshes all data (stats, charts, and articles)
+**Refresh Mechanism**:
+- **Manual Refresh**: "🔄 Refresh Stats" button clears all caches (`st.cache_data` and `st.cache_resource`) and refreshes all data (stats, charts, and articles). Users can click this button whenever they want to see the latest statistics, charts, and articles.
 
 **Chart Types**:
 - AI Topics Distribution (Bar chart)

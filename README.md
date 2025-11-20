@@ -10,7 +10,7 @@ A practical system that fetches recent news articles from GDELT, classifies AI-r
 - **SQLite Storage**: Efficient local database with deduplication and analytics
 - **Streamlit Dashboard**: Interactive web interface with:
   - Pipeline start/stop controls
-  - Live statistics and metrics with automatic refresh (every 30 seconds when pipeline is running, and when pipeline completes each batch run)
+  - Live statistics and metrics with manual refresh button
   - Manual refresh button to refresh all data (stats, charts, articles)
   - Paginated AI article browser
   - Interactive trend charts (hourly, daily, weekly, monthly, yearly)
@@ -60,7 +60,6 @@ Open `http://localhost:8501` in your browser.
 
 - **START**: Runs the pipeline in the background as a separate process
 - **STOP**: Terminates the running pipeline
-- **Auto-Refresh**: Automatically refreshes every 30 seconds when pipeline is running, and when pipeline completes each batch run (every 2 hours in continuous mode)
 - **Manual Refresh**: Click the "🔄 Refresh Stats" button to refresh all data (stats, charts, and articles)
 - **Language Selection**: Switch between English and Danish interface using flag icons
 - **Admin Login**: Access admin controls by clicking the login button (requires ADMIN_USERNAME and ADMIN_PASSWORD)
