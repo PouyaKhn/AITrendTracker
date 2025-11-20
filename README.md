@@ -150,29 +150,6 @@ For production deployment with a custom domain, use Nginx as a reverse proxy. A 
 - Subdirectory deployment support (e.g., `/aitrendtracker`)
 - Static file serving
 
-### HTTPS Setup
-
-To enable HTTPS for your domain:
-
-1. **Install Certbot**:
-   ```bash
-   sudo apt update
-   sudo apt install certbot python3-certbot-nginx -y
-   ```
-
-2. **Obtain SSL Certificate**:
-   ```bash
-   sudo certbot --nginx -d your-domain.com -d www.your-domain.com
-   ```
-
-Certbot will automatically:
-- Obtain free SSL certificates from Let's Encrypt
-- Update your Nginx configuration
-- Set up automatic renewal
-- Redirect HTTP to HTTPS
-
-For detailed HTTPS setup instructions, see `Documentation.md`.
-
 ### Deployment Steps
 
 1. **Clone repository** on your server
@@ -180,8 +157,7 @@ For detailed HTTPS setup instructions, see `Documentation.md`.
 3. **Install dependencies**: `pip install -r requirements.txt`
 4. **Configure systemd service** (see `streamlit.service`)
 5. **Configure Nginx** (see `nginx-ai-center.conf`)
-6. **Set up HTTPS** (optional, see HTTPS Setup above)
-7. **Start service**: `sudo systemctl start streamlit`
+6. **Start service**: `sudo systemctl start streamlit`
 
 For detailed deployment instructions, see `Documentation.md`.
 
@@ -219,42 +195,19 @@ The system classifies articles into 14 AI topic categories:
 - AI Applications and Deployment
 - AI Technology and Infrastructure
 
-## Troubleshooting
+## Domain Categories
 
-### Port Already in Use
+The system categorizes news sources into 8 domain categories:
 
-```bash
-streamlit run streamlit_app.py --server.port 8502
-```
-
-### Missing Dependencies
-
-```bash
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-### Missing API Keys
-
-Set `OPENAI_API_KEY` and/or `ANTHROPIC_API_KEY` environment variables. The system will use keyword-based fallback if APIs are unavailable.
-
-### No New Articles
-
-GDELT may have limited articles in the current 2-hour window. The system fetches from the past 2 hours only (minimum GDELT timespan). Try again later or check logs for domain failures.
-
-### Database Issues
-
-```bash
-# Check database
-sqlite3 data/processed_articles.db "SELECT COUNT(*) FROM processed_articles;"
-
-# View recent articles
-sqlite3 data/processed_articles.db "SELECT title, domain, processed_at FROM processed_articles ORDER BY processed_at DESC LIMIT 10;"
-```
-
-### Admin Login Not Working
-
-Ensure `ADMIN_USERNAME` and `ADMIN_PASSWORD` are set in your `.env` file or as environment variables. The admin login button will not appear if credentials are not configured.
+- Advertising and Commercial
+- Journalism, News and Media
+- Graphic Design and Visual Communication
+- Strategic Communication and PR
+- Film and TV Production
+- Photography
+- Web and UX Design
+- Digital Media and Content Creation
+- Other (for uncategorized domains)
 
 ## Environment Variables
 
