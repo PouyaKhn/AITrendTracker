@@ -102,7 +102,8 @@ LANGUAGES = {
         
                 
         'footer_built_with': 'Built with Streamlit',
-        'footer_description': 'Crawl and analyse English and Danish AI-related articles from journalism, media and commercial sources in near real-time.',
+        'footer_description': 'Collects and analyzes AI-related articles in Danish and English from editorial and commercial sources.',
+        'footer_center_text': 'Center for AI @ DMJX',
         
                       
         'topics_distribution': 'Topics Distribution',
@@ -137,7 +138,7 @@ LANGUAGES = {
         'processed': 'Processed',
         
                                   
-        'ai_articles_by_topic': 'AI Articles by AI Topic',
+        'ai_articles_by_topic': 'AI Articles by Topic',
         'ai_articles_by_category': 'AI Articles by Category',
         'ai_articles_trend': 'AI Articles Trend',
         'ai_topics': 'AI Topics',
@@ -339,6 +340,7 @@ LANGUAGES = {
                 
         'footer_built_with': 'Bygget med Streamlit',
         'footer_description': 'Indsamler og analyserer AI-relaterede artikler på dansk og engelsk fra redaktionelle og kommercielle kilder.',
+        'footer_center_text': 'Center for AI ved DMJX',
         
                       
         'topics_distribution': 'Emnefordeling',

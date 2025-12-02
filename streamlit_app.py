@@ -2175,7 +2175,7 @@ def main():
         st.markdown(f"""
         <div style=\"color: #666; display: flex; align-items: center; gap: 18px;\">
             <div>
-                <p style=\"margin: 0; font-size: 1.1em; font-weight: 500;\">🤖 {t('app_title')} | Center for AI ved DMJX</p>
+                <p style=\"margin: 0; font-size: 1.1em; font-weight: 500;\">🤖 {t('app_title')} | {t('footer_center_text')}</p>
                 <p style=\"margin: 5px 0 0 0; font-size: 0.9em;\">{t('footer_description')}</p>
             </div>
         </div>
