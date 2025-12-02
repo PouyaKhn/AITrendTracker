@@ -1857,7 +1857,10 @@ def main():
             st.markdown(f"**{t('ai_topic')}**")
                                   
             all_topics = sorted(list(set([normalize_ai_topic(article.get('ai_topic')) for article in ai_articles if article.get('ai_topic')])))
-            topics_display = [t('all')] + [translate_ai_topic(topic) for topic in all_topics]
+            topics_display = [t('all')] + [translate_ai_topic(topic) for topic in all_topics if translate_ai_topic(topic) != t('other')]
+            if t('other') in topics_display:
+                topics_display.remove(t('other'))
+            topics_display.append(t('other'))
             
             selected_topic = st.selectbox(
                 t('ai_topic'),
@@ -1870,18 +1873,22 @@ def main():
         filtered_articles = ai_articles.copy()
         
         if selected_category != t('all'):
-                                                                     
-            for orig_cat in all_categories:
-                if translate_domain_category(orig_cat) == selected_category:
-                    filtered_articles = [a for a in filtered_articles if a.get('domain_category') == orig_cat]
-                    break
+            if selected_category == t('other'):
+                filtered_articles = [a for a in filtered_articles if normalize_domain_category(a.get('domain_category')).lower() == 'other']
+            else:
+                for orig_cat in all_categories:
+                    if translate_domain_category(orig_cat) == selected_category:
+                        filtered_articles = [a for a in filtered_articles if normalize_domain_category(a.get('domain_category')) == orig_cat]
+                        break
         
         if selected_topic != t('all'):
-                                                                  
-            for orig_topic in all_topics:
-                if translate_ai_topic(orig_topic) == selected_topic:
-                    filtered_articles = [a for a in filtered_articles if a.get('ai_topic') == orig_topic]
-                    break
+            if selected_topic == t('other'):
+                filtered_articles = [a for a in filtered_articles if normalize_ai_topic(a.get('ai_topic')).lower() == 'other']
+            else:
+                for orig_topic in all_topics:
+                    if translate_ai_topic(orig_topic) == selected_topic:
+                        filtered_articles = [a for a in filtered_articles if normalize_ai_topic(a.get('ai_topic')) == orig_topic]
+                        break
         
                                            
         ai_articles = filtered_articles
