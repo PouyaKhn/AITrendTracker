@@ -28,19 +28,19 @@ from config import load_config
 def normalize_domain_category(category: Any) -> str:
     """Normalize domain category values for display."""
     if not category:
-        return 'Other'
+        return 'other'
     category_str = str(category)
     if category_str.lower() == 'unknown':
-        return 'Other'
+        return 'other'
     return category_str
 
 def normalize_ai_topic(topic: Any) -> str:
     """Normalize AI topic values for display."""
     if not topic:
-        return 'Other'
+        return 'other'
     topic_str = str(topic)
-    if topic_str.lower() in ['unknown', 'unknown topic', 'none', 'null']:
-        return 'Other'
+    if topic_str.lower() in ['unknown', 'unknown topic', 'none', 'null', 'other']:
+        return 'other'
     return topic_str
 
 @st.cache_data(ttl=30)
@@ -55,7 +55,7 @@ def get_ai_articles_by_topic(language: str = None) -> Dict[str, int]:
         topics = Counter()
         for article in ai_articles:
             topic = normalize_ai_topic(article.get('ai_topic'))
-            if topic and topic != 'Other':
+            if topic and topic.lower() != 'other':
                 translated_topic = translate_ai_topic(topic)
                 topics[translated_topic] += 1
         

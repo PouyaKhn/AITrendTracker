@@ -490,7 +490,11 @@ def t(key):
 
 def translate_ai_topic(topic: str) -> str:
     """Translate AI topic from English to current language"""
-    if not topic or topic.lower() in ['unknown', 'unknown topic', 'other', 'none', 'null']:
+    if not topic:
+        return t('other')
+    
+    topic_lower = topic.lower()
+    if topic_lower in ['unknown', 'unknown topic', 'other', 'none', 'null']:
         return t('other')
     
                                                         
