@@ -1841,7 +1841,10 @@ def main():
             st.markdown(f"**{t('category')}**")
                                           
             all_categories = sorted(list(set([normalize_domain_category(article.get('domain_category')) for article in ai_articles])))
-            categories_display = [t('all')] + [translate_domain_category(cat) for cat in all_categories]
+            categories_display = [t('all')] + [translate_domain_category(cat) for cat in all_categories if translate_domain_category(cat) != t('other')]
+            if t('other') in categories_display:
+                categories_display.remove(t('other'))
+            categories_display.append(t('other'))
             
             selected_category = st.selectbox(
                 t('category'),
@@ -2017,7 +2020,7 @@ def main():
     
                     
     st.markdown("---")
-    st.header(f"{t('ai_articles')} {t('statistics')}")
+    st.header(t('ai_articles_statistics'))
     
                                          
     st.subheader(t('topics_distribution'))
@@ -2172,7 +2175,7 @@ def main():
         st.markdown(f"""
         <div style=\"color: #666; display: flex; align-items: center; gap: 18px;\">
             <div>
-                <p style=\"margin: 0; font-size: 1.1em; font-weight: 500;\">🤖 {t('app_title')} | Center for AI @ DMJX</p>
+                <p style=\"margin: 0; font-size: 1.1em; font-weight: 500;\">🤖 {t('app_title')} | Center for AI ved DMJX</p>
                 <p style=\"margin: 5px 0 0 0; font-size: 0.9em;\">{t('footer_description')}</p>
             </div>
         </div>

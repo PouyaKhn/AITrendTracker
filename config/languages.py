@@ -116,6 +116,7 @@ LANGUAGES = {
         
                                      
         'live_statistics': 'Live Statistics',
+        'ai_articles_statistics': 'AI Articles Statistics',
         'live_updates': 'Live Updates',
         'manual_refresh_available': 'Manual refresh available',
         'use_refresh_buttons': 'Use refresh buttons below to see live updates',
@@ -243,7 +244,7 @@ LANGUAGES = {
     'da': {
                    
         'app_title': 'AI Trend Tracker',
-        'welcome_text': 'Hold dig opdateret på de seneste AI-nyheder og trends fra pålidelige kilder: automatisk sporet, analyseret og præsenteret for dig i realtid.',
+        'welcome_text': 'Hold dig opdateret på de seneste AI-nyheder og trends fra pålidelige kilder: automatisk overvåget, analyseret og leveret til dig i realtid.',
         'read_more': '+ Læs mere her',
         'detailed_description': 'AI Trend Tracker er et intelligent nyhedsmonitoringssystem, der automatisk scanner nyhedsartikler fra berømte engelske og danske domæner dækket af GDELT-korpuset for at identificere og analysere AI-relateret indhold. Ved hjælp af avanceret kunstig intelligens kategoriserer systemet artikler efter AI-emner, sporer trends over tid og giver realtidsindsigt i, hvordan kunstig intelligens diskuteres i disse kurerede mediekilder. Uanset om du er forsker, journalist, forretningsprofessionel eller bare nysgerrig på AI-udvikling, hjælper dette værktøj dig med at holde dig informeret om de seneste AI-nyheder og trends fra pålidelige kilder uden at skulle manuelt søge gennem utallige websteder. Systemet kører kontinuerligt, behandler nye artikler hver få timer og præsenterer det mest relevante AI-relaterede indhold i et letforståeligt dashboard med interaktive diagrammer og detaljerede artikelsammenfatninger.',
         
@@ -337,12 +338,12 @@ LANGUAGES = {
         
                 
         'footer_built_with': 'Bygget med Streamlit',
-        'footer_description': 'Crawl og analyser engelske og danske AI-relaterede artikler fra journalistik, medier og kommercielle kilder i næsten realtid.',
+        'footer_description': 'Indsamler og analyserer AI-relaterede artikler på dansk og engelsk fra redaktionelle og kommercielle kilder.',
         
                       
         'topics_distribution': 'Emnefordeling',
         'articles_by_domain': 'Artikler efter domænekategori',
-        'ai_trends': 'AI tendenser',
+        'ai_trends': 'AI-tendenser',
         'hourly_trends': 'Timebaserede trends (i dag)',
         'daily_trends': 'Daglige trends (denne uge)',
         'weekly_trends': 'Ugentlige trends (denne måned)',
@@ -351,6 +352,7 @@ LANGUAGES = {
         
                                      
         'live_statistics': 'Live statistikker',
+        'ai_articles_statistics': 'Statistik over AI-artikler',
         'live_updates': 'Live opdateringer',
         'manual_refresh_available': 'Manuel opdatering tilgængelig',
         'use_refresh_buttons': 'Brug opdateringsknapperne nedenfor for at se live opdateringer',
@@ -371,9 +373,9 @@ LANGUAGES = {
         'processed': 'Behandlet',
         
                                   
-        'ai_articles_by_topic': 'AI-artikler efter AI emne',
+        'ai_articles_by_topic': 'AI-artikler efter emne',
         'ai_articles_by_category': 'AI-artikler efter kategori',
-        'ai_articles_trend': 'AI-artikler trend',
+        'ai_articles_trend': 'Tidslinje for AI-artikler',
         'ai_topics': 'AI emner',
         'number_of_articles': 'Antal artikler',
         'categories': 'Kategorier',
@@ -426,23 +428,23 @@ LANGUAGES = {
         'contact_admin_message': 'Kontakt systemadministratoren, hvis du har brug for adgangslegitimationsoplysninger.',
         
                    
-        'ai_research_development': 'AI forskning og udvikling',
-        'ai_ethics_regulations': 'AI etik og regulering',
-        'ai_safety_governance': 'AI sikkerhed og styring',
-        'ai_business_industry': 'AI forretning og industri',
-        'ai_language_models_nlp': 'AI sprogmodeller og NLP',
-        'ai_robotics_automation': 'AI robotik og automatisering',
-        'ai_healthcare_medical': 'AI sundhed og medicin',
-        'ai_education_training': 'AI uddannelse og træning',
-        'ai_cybersecurity_privacy': 'AI cybersikkerhed og privatliv',
-        'ai_computer_vision': 'AI computervision',
-        'ai_data_science_analytics': 'AI datavidenskab og analyse',
-        'ai_neural_networks_deep_learning': 'AI neurale netværk og deep learning',
-        'ai_applications_deployment': 'AI applikationer og implementering',
-        'ai_technology_infrastructure': 'AI teknologi og infrastruktur',
+        'ai_research_development': 'Forskning og udvikling',
+        'ai_ethics_regulations': 'Etik og regulering',
+        'ai_safety_governance': 'Sikkerhed og styring',
+        'ai_business_industry': 'Forretning og industri',
+        'ai_language_models_nlp': 'Sprogmodeller og NLP',
+        'ai_robotics_automation': 'Robotik og automatisering',
+        'ai_healthcare_medical': 'Sundhed og medicin',
+        'ai_education_training': 'Uddannelse og træning',
+        'ai_cybersecurity_privacy': 'Cybersikkerhed og privatliv',
+        'ai_computer_vision': 'Computervision',
+        'ai_data_science_analytics': 'Datavidenskab og analyse',
+        'ai_neural_networks_deep_learning': 'Neurale netværk og deep learning',
+        'ai_applications_deployment': 'Applikationer og implementering',
+        'ai_technology_infrastructure': 'Teknologi og infrastruktur',
         
                            
-        'advertising_commercial': 'Reklame og kommerciel',
+        'advertising_commercial': 'Reklame og markedsføring',
         'journalism_news_media': 'Journalistik, nyheder og medier',
         'digital_media_content_creation': 'Digitale medier og indholdsproduktion',
         'strategic_communication_pr': 'Strategisk kommunikation og PR',
@@ -460,15 +462,6 @@ LANGUAGES = {
         'to': 'til',
         'of_total': 'af i alt',
         
-                    
-        'journalism_news_media': 'Journalistik, nyheder og medier',
-        'advertising_commercial': 'Reklame og kommerciel',
-        'digital_media_content': 'Digitale medier og indholdsproduktion',
-        'strategic_communication_pr': 'Strategisk kommunikation og PR',
-        'photography': 'Fotografi',
-        'web_ux_design': 'Web- og UX-design',
-        'film_tv_production': 'Film- og TV-produktion',
-        'other': 'Andet',
         
                  
         'filter_articles': 'Filtrer artikler',
