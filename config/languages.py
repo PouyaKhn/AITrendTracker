@@ -454,6 +454,7 @@ LANGUAGES = {
         'web_ux_design': 'Web- og UX-design',
         'film_tv_production': 'Film- og TV-produktion',
         'unknown': 'Ukendt',
+        'other': 'Andet',
         
                     
         'page': 'Side',
