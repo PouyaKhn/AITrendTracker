@@ -13,3 +13,7 @@ logs/
 data/
 *.db
 *.sqlite
+# backups
+*.bak
+.env.bak.*
+*.db.bak.*
