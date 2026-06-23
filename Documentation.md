@@ -108,7 +108,6 @@ GDELT API → Fetcher → Processor → AI Classifier → Database → Dashboard
 
 **Key Features**:
 - OpenAI GPT-4o-mini integration (primary)
-- Anthropic Claude 3.5 Haiku support (fallback)
 - Fallback keyword-based classification
 - Comprehensive AI topic categorization (14 categories)
 - Confidence scoring and explanation generation
@@ -131,7 +130,7 @@ GDELT API → Fetcher → Processor → AI Classifier → Database → Dashboard
 14. AI Technology and Infrastructure
 
 **Classification Process**:
-1. API-based LLM analysis (OpenAI/Anthropic)
+1. API-based analysis (OpenAI)
 2. JSON response parsing with regex fallback
 3. Manual response parsing if JSON extraction fails
 4. Fallback keyword matching if APIs unavailable
@@ -141,7 +140,6 @@ GDELT API → Fetcher → Processor → AI Classifier → Database → Dashboard
 
 **API Configuration**:
 - OpenAI model: `gpt-4o-mini-2024-07-18`
-- Anthropic model: `claude-3-5-haiku-20241022`
 - Temperature: 0.1 (low for consistency)
 - Max tokens: 300
 - Rate limiting: 100ms delay between API calls
@@ -304,7 +302,7 @@ GDELT API → Fetcher → Processor → AI Classifier → Database → Dashboard
 - **Control Panel**: Start/stop pipeline, status indicators, language selection
 - **Live Statistics**: Real-time metrics and counters with manual refresh button
 - **Article Browser**: Paginated AI article list with expandable details and summaries
-- **Analytics Charts**: Topic distribution, category analysis, trend analysis
+- **Analytics Charts**: Topic distribution, category analysis
 - **Status Monitoring**: Process health and error reporting
 - **Admin Panel**: Pipeline controls, database management, system monitoring
 
@@ -314,12 +312,6 @@ GDELT API → Fetcher → Processor → AI Classifier → Database → Dashboard
 **Chart Types**:
 - AI Topics Distribution (Bar chart)
 - Articles by Domain Category (Bar chart)
-- Trend Analysis (Line chart):
-  - Hourly: Today (00-23)
-  - Daily: Current week (Mon-Sun)
-  - Weekly: Weeks 1-4 of current month
-  - Monthly: January-December of current year
-  - Yearly: From 2025 onward
 
 **Language Support**:
 - English (en) - default
@@ -336,7 +328,7 @@ GDELT API → Fetcher → Processor → AI Classifier → Database → Dashboard
 - **Storage**: Data directory, log paths, file retention
 - **Fetching**: Intervals, timeouts, rate limiting
 - **Processing**: Article limits, validation criteria
-- **API Keys**: OpenAI, Anthropic
+- **API Keys**: OpenAI
 - **Database**: Connection settings, cleanup policies
 - **Logging**: Levels, formats, rotation
 
@@ -344,13 +336,12 @@ GDELT API → Fetcher → Processor → AI Classifier → Database → Dashboard
 - `FETCH_INTERVAL`: Minutes between runs (default: 120)
 - `MAX_ARTICLES`: Article limit (0 = unlimited, default)
 - `OPENAI_API_KEY`: OpenAI API access (required for classification and summaries)
-- `ANTHROPIC_API_KEY`: Anthropic API access (optional, fallback)
 - `LOG_LEVEL`: Logging verbosity (DEBUG, INFO, WARNING, ERROR)
 - `STORAGE_DIR`: Data storage location (default: ./data)
 - `LOG_PATH`: Log file path (default: ./logs/news_scraper.log)
 - `MIN_ARTICLE_LENGTH`: Minimum article text length (default: 700)
 - `ADMIN_USERNAME`: Admin login username (required for admin access)
-- `ADMIN_PASSWORD`: Admin login password (required for admin access)
+- `ADMIN_PASSWORD_HASH`: PBKDF2 hash of the admin login password (required for admin access; generate with `python auth.py`)
 
 **Core Functions**:
 - `load_config()`: Singleton configuration loader
@@ -463,7 +454,6 @@ logs/
 ### LLM API Integration
 
 - **OpenAI**: GPT-4o-mini for classification (primary)
-- **Anthropic**: Claude 3.5 Haiku as fallback
 - **Rate Limiting**: 100ms delays between API calls
 - **Error Handling**: Graceful fallback to keyword matching
 - **Response Format**: JSON with structured classification results
@@ -531,11 +521,10 @@ pip install -r requirements.txt
 
 # Set environment variables
 export OPENAI_API_KEY=your_key
-export ANTHROPIC_API_KEY=your_key
 export FETCH_INTERVAL=120
 export MAX_ARTICLES=0
 export ADMIN_USERNAME=your_admin_username
-export ADMIN_PASSWORD=your_admin_password
+export ADMIN_PASSWORD_HASH='pbkdf2_sha256$...'  # generate with: python auth.py
 ```
 
 ### Running the System
@@ -628,9 +617,8 @@ sudo ufw reload
 
 Ensure all required environment variables are set in your `.env` file:
 - `OPENAI_API_KEY`: Required for AI classification and summaries
-- `ANTHROPIC_API_KEY`: Optional, used as fallback
 - `ADMIN_USERNAME`: Required for admin access
-- `ADMIN_PASSWORD`: Required for admin access
+- `ADMIN_PASSWORD_HASH`: Required for admin access (PBKDF2 hash; generate with `python auth.py`)
 - `FETCH_INTERVAL`: Pipeline execution interval (default: 120 minutes)
 - `MAX_ARTICLES`: Article limit (0 = unlimited)
 - `STORAGE_DIR`: Data storage directory
@@ -675,13 +663,13 @@ This section describes the purpose and functionality of each file in the codebas
 
 - **`processor.py`**: Article processing and validation module. Validates article data (required fields, content length, format), normalizes encoding (UTF-8, Unicode NFKC), generates content hashes for deduplication, and stores articles as JSON files with metadata.
 
-- **`ai_classifier.py`**: AI topic classification module. Uses LLM APIs (OpenAI GPT-4o-mini, Anthropic Claude 3.5 Haiku) to classify articles for AI-related content. Provides fallback keyword-based classification when APIs are unavailable. Categorizes articles into 14 AI topic categories with confidence scoring.
+- **`ai_classifier.py`**: AI topic classification module. Uses the OpenAI API (GPT-4o-mini) to classify articles for AI-related content. Provides fallback keyword-based classification when APIs are unavailable. Categorizes articles into 14 AI topic categories with confidence scoring.
 
 - **`database.py`**: SQLite database management module. Handles article storage, deduplication, pipeline run tracking, statistics aggregation, and data cleanup. Provides queries for dashboard analytics and article retrieval. Manages database schema and indexes.
 
 - **`scheduler.py`**: Task scheduling module. Implements automated execution management for continuous pipeline operation. Handles configurable interval scheduling (default: 2 hours), graceful shutdown (SIGINT, SIGTERM), job re-registration on failure, and unlimited mode enforcement.
 
-- **`streamlit_app.py`**: Streamlit web dashboard application. Provides user interface for pipeline monitoring and control. Features include: pipeline start/stop controls, real-time statistics display, AI article browsing with pagination, interactive charts (topics, categories, trends), multilingual support (English/Danish), admin login system, and database management.
+- **`streamlit_app.py`**: Streamlit web dashboard application. Provides user interface for pipeline monitoring and control. Features include: pipeline start/stop controls, real-time statistics display, AI article browsing with pagination, interactive charts (topics, categories), multilingual support (English/Danish), admin login system, and database management.
 
 - **`summaries.py`**: Article summary generation module. Generates and caches Danish summaries for articles using OpenAI API. Implements thread-safe client initialization, lazy loading, and fallback to English text when API is unavailable.
 

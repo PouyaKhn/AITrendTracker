@@ -178,6 +178,21 @@ class ArticleDatabase:
             logger.error(f"Failed to get processed URLs: {e}")
             return set()
     
+    def get_processed_domain_title_pairs(self) -> List[tuple]:
+        """Get (domain, title) for every stored article, for cross-run deduplication.
+
+        Returned raw; the caller normalizes the domain (to collapse subdomains such
+        as us.cnn.com -> cnn.com) and the title before building dedup keys.
+        """
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('SELECT domain, title FROM processed_articles')
+                return [(row[0], row[1]) for row in cursor.fetchall()]
+        except Exception as e:
+            logger.error(f"Failed to get domain/title pairs: {e}")
+            return []
+
     def get_last_processed_time(self) -> Optional[str]:
         """Get timestamp of the most recently processed article."""
         try:

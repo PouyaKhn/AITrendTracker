@@ -189,8 +189,19 @@ def run_batch():
             logger.debug(f"Found {len(processed_urls)} already processed URLs in database")
             
             from fetcher import normalize_domain_for_dedup
-            
+
             seen_domain_title: Set[tuple] = set()
+
+
+            try:
+                for existing_domain, existing_title in db.get_processed_domain_title_pairs():
+                    seen_domain_title.add((
+                        normalize_domain_for_dedup(existing_domain or ''),
+                        (existing_title or '').strip().lower()
+                    ))
+                logger.debug(f"Seeded {len(seen_domain_title)} domain+title dedup keys from database")
+            except Exception as seed_error:
+                logger.warning(f"Could not seed dedup keys from database: {seed_error}")
             final_articles = []
             duplicates_removed = 0
             removed_danish_count = 0

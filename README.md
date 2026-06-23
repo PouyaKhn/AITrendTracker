@@ -1,19 +1,18 @@
 # AI Trend Tracker – News Pipeline and Dashboard
 
-A practical system that fetches recent news articles from GDELT, classifies AI-related content using LLM APIs (OpenAI/Anthropic), stores them in SQLite, and visualizes results in a multilingual Streamlit dashboard.
+A practical system that fetches recent news articles from GDELT, classifies AI-related content using the OpenAI API, stores them in SQLite, and visualizes results in a multilingual Streamlit dashboard.
 
 ## Features
 
 - **GDELT Integration**: Fetches worldwide news articles from the past 2 hours (unlimited mode)
 - **Robust Text Extraction**: Multi-library approach (Trafilatura, Goose3, Newspaper3k, Readability-lxml, BeautifulSoup)
-- **AI Classification**: API-based LLM classification using OpenAI GPT-4o-mini or Anthropic Claude 3.5 Haiku
+- **AI Classification**: API-based classification using OpenAI GPT-4o-mini
 - **SQLite Storage**: Efficient local database with deduplication and analytics
 - **Streamlit Dashboard**: Interactive web interface with:
   - Pipeline start/stop controls
   - Live statistics and metrics with manual refresh button
   - Manual refresh button to refresh all data (stats, charts, articles)
   - Paginated AI article browser
-  - Interactive trend charts (hourly, daily, weekly, monthly, yearly)
   - Multilingual support (English/Danish)
   - Admin login for pipeline management and database operations
   - Database clearing functionality
@@ -38,13 +37,14 @@ Create a `.env` file or set environment variables:
 
 ```bash
 export OPENAI_API_KEY=your_openai_key
-export ANTHROPIC_API_KEY=your_anthropic_key
 export FETCH_INTERVAL=120          # minutes between runs (default: 120)
 export MAX_ARTICLES=0              # 0 = unlimited mode (default)
 export LOG_LEVEL=INFO              # DEBUG, INFO, WARNING, ERROR
 export STORAGE_DIR=./data          # data storage directory
 export ADMIN_USERNAME=your_admin_username  # Admin login username (required)
-export ADMIN_PASSWORD=your_admin_password  # Admin login password (required)
+# Admin login password as a PBKDF2 hash (required). Generate with:
+#   python auth.py
+export ADMIN_PASSWORD_HASH='pbkdf2_sha256$...'  # see "Admin Authentication" below
 ```
 
 ### 3. Run the Dashboard
@@ -62,7 +62,7 @@ Open `http://localhost:8501` in your browser.
 - **STOP**: Terminates the running pipeline
 - **Manual Refresh**: Click the "🔄 Refresh Stats" button to refresh all data (stats, charts, and articles)
 - **Language Selection**: Switch between English and Danish interface using flag icons
-- **Admin Login**: Access admin controls by clicking the login button (requires ADMIN_USERNAME and ADMIN_PASSWORD)
+- **Admin Login**: Access admin controls by clicking the login button (requires ADMIN_USERNAME and ADMIN_PASSWORD_HASH)
 - **Database Management**: Clear database functionality available in admin panel
 
 ### Dashboard Features
@@ -73,12 +73,6 @@ Open `http://localhost:8501` in your browser.
 - **Interactive Charts**:
   - AI Topics Distribution (bar chart)
   - Articles by Domain Category (bar chart)
-  - Trend Analysis (line charts):
-    - Hourly: Today (00-23)
-    - Daily: Current week (Mon-Sun)
-    - Weekly: Weeks 1-4 of current month
-    - Monthly: January-December of current year
-    - Yearly: From 2025 onward
 - **Admin Panel**: Pipeline controls, database management, and system monitoring
 
 ## Command Line Interface
@@ -109,7 +103,7 @@ The pipeline runs every 2 hours (configurable via `FETCH_INTERVAL`).
 
 - **`fetcher.py`**: GDELT API integration, text extraction, domain filtering, duplicate removal
 - **`processor.py`**: Article validation, encoding normalization, JSON storage
-- **`ai_classifier.py`**: LLM API integration (OpenAI/Anthropic) for AI topic classification
+- **`ai_classifier.py`**: OpenAI API integration for AI topic classification
 - **`pipeline.py`**: Main orchestration (fetch → process → classify → store → database)
 - **`database.py`**: SQLite schema, queries, and analytics
 - **`scheduler.py`**: Background scheduling for continuous operation
@@ -248,20 +242,32 @@ The system categorizes news sources into 8 domain categories:
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `OPENAI_API_KEY` | OpenAI API key for classification and summaries | None |
-| `ANTHROPIC_API_KEY` | Anthropic API key for classification | None |
 | `FETCH_INTERVAL` | Minutes between pipeline runs | 120 |
 | `MAX_ARTICLES` | Maximum articles per batch (0 = unlimited) | 0 |
 | `LOG_LEVEL` | Logging verbosity (DEBUG, INFO, WARNING, ERROR) | INFO |
 | `STORAGE_DIR` | Data storage directory | ./data |
 | `LOG_PATH` | Log file path | ./logs/news_scraper.log |
 | `ADMIN_USERNAME` | Admin login username (required for admin access) | None |
-| `ADMIN_PASSWORD` | Admin login password (required for admin access) | None |
+| `ADMIN_PASSWORD_HASH` | PBKDF2 hash of the admin password (required). Generate with `python auth.py` | None |
+
+### Admin Authentication
+
+Admin credentials are verified against a **salted PBKDF2-SHA256 hash** — the plaintext
+password is never stored in code or environment. Generate a hash and set it as
+`ADMIN_PASSWORD_HASH`:
+
+```bash
+python auth.py            # prompts for a password, prints the hash to set
+```
+
+Login verification uses a constant-time comparison (`hmac.compare_digest`), and repeated
+failed attempts are rate-limited within a session.
 
 ## Requirements
 
 - Python 3.8+
 - 2GB+ RAM recommended
-- Internet connection for GDELT and LLM APIs
+- Internet connection for GDELT and the OpenAI API
 - 10GB+ disk space for data and logs
 
 ## License

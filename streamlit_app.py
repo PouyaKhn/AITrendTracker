@@ -25,6 +25,23 @@ from database import get_database, reset_database_instance
 from config.languages import LANGUAGES, get_language, set_language, t, translate_ai_topic, translate_domain_category, translate_day_name, translate_month_name, translate_week_label
 from config import load_config
 
+def normalize_base_domain(domain: Any) -> str:
+    """Reduce a domain to its base (registrable) form for dedup.
+
+    Collapses subdomains so a site and its subdomains count as one source, e.g.
+    us.cnn.com -> cnn.com, www.cnn.com -> cnn.com, cnn.com -> cnn.com.
+    """
+    if not domain:
+        return ''
+    d = str(domain).lower().strip()
+    if d.startswith('www.'):
+        d = d[4:]
+    parts = d.split('.')
+    if len(parts) >= 2:
+        return '.'.join(parts[-2:])
+    return d
+
+
 def normalize_domain_category(category: Any) -> str:
     """Normalize domain category values for display."""
     if not category:
@@ -85,100 +102,6 @@ def get_ai_articles_by_category(language: str = None) -> Dict[str, int]:
     except Exception:
         return {}
 
-@st.cache_data(ttl=30)
-def get_ai_articles_trend_data(time_period: str, language: str = None) -> Dict[str, int]:
-    """Fixed-range trend bins for hourly/daily/weekly/monthly/yearly as requested."""
-    try:
-        import calendar
-        db = get_database()
-        ai_articles = db.get_recent_ai_articles(limit=100000)
-        parsed = []
-        for a in ai_articles or []:
-            ts = a.get('processed_at')
-            if not ts:
-                continue
-            try:
-                dt = datetime.fromisoformat(ts.replace('Z', '+00:00')) if 'T' in ts else datetime.fromisoformat(ts)
-                parsed.append(dt.replace(tzinfo=None))
-            except Exception:
-                continue
-        now = datetime.now().replace(tzinfo=None)
-
-        if time_period == 'hourly':
-            labels = [f"{h:02d}:00" for h in range(24)]
-            bins = {l: 0 for l in labels}
-            today = now.date()
-            for dt in parsed:
-                if dt.date() == today:
-                    bins[f"{dt.hour:02d}:00"] += 1
-            return bins
-
-        if time_period == 'daily':
-            monday = now - timedelta(days=now.weekday())
-            days = [monday + timedelta(days=i) for i in range(7)]
-            labels = [d.strftime('%A') for d in days]
-            bins = {l: 0 for l in labels}
-            map_day = {d.date(): d.strftime('%A') for d in days}
-            for dt in parsed:
-                if dt.date() in map_day:
-                    bins[map_day[dt.date()]] += 1
-            
-            translated_bins = {}
-            for label, count in bins.items():
-                translated_label = translate_day_name(label)
-                translated_bins[translated_label] = count
-            return translated_bins
-
-        if time_period == 'weekly':
-            labels = [f"Week {i}" for i in range(1, 5)]
-            bins = {l: 0 for l in labels}
-            y, m = now.year, now.month
-            for dt in parsed:
-                if dt.year == y and dt.month == m:
-                    d = dt.day
-                    if 1 <= d <= 7:
-                        bins['Week 1'] += 1
-                    elif 8 <= d <= 14:
-                        bins['Week 2'] += 1
-                    elif 15 <= d <= 21:
-                        bins['Week 3'] += 1
-                    else:
-                        bins['Week 4'] += 1
-            
-            translated_bins = {}
-            for label, count in bins.items():
-                translated_label = translate_week_label(label)
-                translated_bins[translated_label] = count
-            return translated_bins
-
-        if time_period == 'monthly':
-            y = now.year
-            labels = [calendar.month_name[i] for i in range(1, 13)]
-            bins = {l: 0 for l in labels}
-            for dt in parsed:
-                if dt.year == y:
-                    bins[calendar.month_name[dt.month]] += 1
-            
-            translated_bins = {}
-            for label, count in bins.items():
-                translated_label = translate_month_name(label)
-                translated_bins[translated_label] = count
-            return translated_bins
-
-                
-        start_year = 2025
-        labels = [str(y) for y in range(start_year, max(start_year, now.year) + 1)]
-        bins = {l: 0 for l in labels}
-        for dt in parsed:
-            y = str(dt.year)
-            if int(y) >= start_year:
-                if y not in bins:
-                    bins[y] = 0
-                bins[y] += 1
-        return bins
-    except Exception:
-        return {}
-
 
 def get_ai_articles_with_content() -> List[Dict[str, Any]]:
     """Get AI articles with summaries and metadata from the database."""
@@ -230,6 +153,20 @@ def get_ai_articles_with_content() -> List[Dict[str, Any]]:
                 'ai_confidence': ai_confidence,
                 'ai_keywords': ai_keywords,
             })
+
+        # Collapse duplicates that come from a site and its subdomains sharing the
+        # same headline (e.g. cnn.com vs us.cnn.com). Key on base domain + title;
+        # keep the canonical (shortest) domain.
+        deduped: Dict[tuple, Dict[str, Any]] = {}
+        for art in articles_with_content:
+            key = (
+                normalize_base_domain(art.get('domain', '')),
+                (art.get('title', '') or '').strip().lower(),
+            )
+            existing = deduped.get(key)
+            if existing is None or len(str(art.get('domain', ''))) < len(str(existing.get('domain', ''))):
+                deduped[key] = art
+        articles_with_content = list(deduped.values())
 
         articles_with_content.sort(key=lambda x: x.get('processed_at', ''), reverse=True)
         return articles_with_content
@@ -1080,19 +1017,33 @@ def admin_login_page():
         col1, col2, col3 = st.columns([1, 1, 1])
         with col2:
             if st.button(f"🔑 {t('login')}", type="primary", width='stretch'):
-                admin_username = os.getenv('ADMIN_USERNAME', '')
-                admin_password = os.getenv('ADMIN_PASSWORD', '')
-                
-                if not admin_username or not admin_password:
-                    st.error("❌ Admin credentials not configured. Please set ADMIN_USERNAME and ADMIN_PASSWORD environment variables.")
-                elif username == admin_username and password == admin_password:
+                from auth import admin_credentials_configured, verify_admin_credentials
+
+                # Per-session rate limiting to slow down brute-force attempts
+                max_attempts = 5
+                lockout_seconds = 300
+                now_ts = time.time()
+                locked_until = st.session_state.get('login_locked_until', 0)
+
+                if not admin_credentials_configured():
+                    st.error("❌ Admin credentials not configured. Please set ADMIN_USERNAME and ADMIN_PASSWORD_HASH environment variables.")
+                elif now_ts < locked_until:
+                    st.error(f"❌ Too many failed attempts. Try again in {int(locked_until - now_ts)} seconds.")
+                elif verify_admin_credentials(username, password):
                     st.session_state.admin_logged_in = True
-                    st.session_state.show_login = False                    
+                    st.session_state.show_login = False
+                    st.session_state.login_attempts = 0
                     st.success(f"✅ {t('login_successful')}")
                     time.sleep(1)
                     st.rerun()
                 else:
-                    st.error(f"❌ {t('login_failed')}")
+                    st.session_state.login_attempts = st.session_state.get('login_attempts', 0) + 1
+                    if st.session_state.login_attempts >= max_attempts:
+                        st.session_state.login_locked_until = now_ts + lockout_seconds
+                        st.session_state.login_attempts = 0
+                        st.error(f"❌ Too many failed attempts. Locked for {lockout_seconds // 60} minutes.")
+                    else:
+                        st.error(f"❌ {t('login_failed')}")
         
                      
         with col1:
@@ -2073,55 +2024,6 @@ def main():
     else:
         st.info(t('no_category_data'))
     
-                                 
-    st.subheader(f"{t('ai_trends')}")
-
-                          
-    time_period_options = ['hourly', 'daily', 'weekly', 'monthly', 'yearly']
-    time_period_labels = [t(option) for option in time_period_options]
-    
-    time_period = st.selectbox(
-        t('select_time_period'),
-        options=time_period_options,
-        format_func=lambda x: t(x),
-        index=1,                    
-        key="trend_time_period"
-    )
-
-                    
-    trend_data = get_ai_articles_trend_data(time_period, get_language())
-
-    if trend_data:
-                            
-        df_trend = pd.DataFrame([
-            {t('time_period'): k, t('number_of_articles'): trend_data[k]}
-            for k in trend_data.keys()
-        ])
-                    
-        fig_trend = px.line(
-            df_trend,
-            x=t('time_period'),
-            y=t('number_of_articles'),
-            title=f"{t('ai_articles_trend')} ({t(time_period)})",
-            markers=True
-        )
-        fig_trend.update_layout(
-            xaxis_title=(
-                t('hours') if time_period == 'hourly' else
-                t('days_of_week') if time_period == 'daily' else
-                t('weeks') if time_period == 'weekly' else
-                t('months') if time_period == 'monthly' else
-                t('years')
-            ),
-            yaxis_title=t('number_of_articles'),
-            showlegend=False,
-            height=400
-        )
-                                                                                
-        fig_trend.update_xaxes(type='category')
-        st.plotly_chart(fig_trend, width='stretch')
-    else:
-        st.info(f"No trend data available for {time_period} period yet. Run the pipeline to collect articles.")
         
                                                                    
     st.markdown("---")

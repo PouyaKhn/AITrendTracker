@@ -32,14 +32,6 @@ except ImportError:
     OPENAI_AVAILABLE = False
     logger.warning("OpenAI library not available")
 
-try:
-    import anthropic
-    ANTHROPIC_AVAILABLE = True
-    logger.info("Anthropic library available for API-based classification")
-except ImportError:
-    ANTHROPIC_AVAILABLE = False
-    logger.warning("Anthropic library not available")
-
 
 @dataclass
 class AITopicResult:
@@ -77,48 +69,33 @@ class APIBasedAITopicClassifier:
         
                                 
         self.openai_client = None
-        self.anthropic_client = None
         self._initialize_api_clients()
         
         self.logger.info("API-based AI topic classifier initialized")
     
     def _initialize_api_clients(self):
-        """Initialize API clients if API keys are available."""
-                                         
+        """Initialize the OpenAI client if an API key is available."""
+
         openai_api_key = os.getenv('OPENAI_API_KEY')
-        anthropic_api_key = os.getenv('ANTHROPIC_API_KEY')
-        
-        self.logger.info(f"API Key Check - OPENAI_API_KEY present: {bool(openai_api_key and openai_api_key.strip())}, "
-                        f"ANTHROPIC_API_KEY present: {bool(anthropic_api_key and anthropic_api_key.strip())}")
-        
+
+        self.logger.info(f"API Key Check - OPENAI_API_KEY present: {bool(openai_api_key and openai_api_key.strip())}")
+
         if openai_api_key and openai_api_key.strip() and OPENAI_AVAILABLE:
             try:
                 self.openai_client = openai.OpenAI(api_key=openai_api_key.strip())
                 self.logger.info("OpenAI client initialized successfully")
             except Exception as e:
                 self.logger.warning(f"Failed to initialize OpenAI client: {e}")
-        
-                                            
-        if anthropic_api_key and anthropic_api_key.strip() and ANTHROPIC_AVAILABLE:
-            try:
-                self.anthropic_client = anthropic.Anthropic(api_key=anthropic_api_key.strip())
-                self.logger.info("Anthropic client initialized successfully")
-            except Exception as e:
-                self.logger.warning(f"Failed to initialize Anthropic client: {e}")
-        
-        if not self.openai_client and not self.anthropic_client:
-            self.logger.warning("No API clients available - will use fallback classification")
+
+        if not self.openai_client:
+            self.logger.warning("No OpenAI client available - will use fallback classification")
             if not openai_api_key or not openai_api_key.strip():
                 self.logger.warning("OPENAI_API_KEY is missing or empty in environment")
-            if not anthropic_api_key or not anthropic_api_key.strip():
-                self.logger.debug("ANTHROPIC_API_KEY is missing or empty (this is OK if not using Anthropic)")
     
     def classify_article(self, text: str, title: str = "") -> AITopicResult:
         """Classify whether an article is about AI topics."""
         if self.openai_client:
             return self._classify_with_openai(text, title)
-        elif self.anthropic_client:
-            return self._classify_with_anthropic(text, title)
         else:
             return self._classify_with_fallback(text, title)
     
@@ -187,71 +164,6 @@ Respond only with the JSON format."""
             self.logger.error(f"OpenAI classification failed: {e}")
             return self._classify_with_fallback(text, title)
     
-    def _classify_with_anthropic(self, text: str, title: str = "") -> AITopicResult:
-        """Classify article using Anthropic API."""
-        try:
-            full_text = f"Title: {title}\n\nContent: {text}".strip()
-            
-            prompt = f"""Analyze this article and determine if it is primarily about artificial intelligence (AI) or not.
-
-Article to analyze:
-{full_text}
-
-Please analyze whether this article is primarily about artificial intelligence topics. Consider:
-- AI Research and Development
-- AI Ethics and Regulations  
-- AI Business and Industry
-- AI Language Models and NLP
-- AI Robotics and Automation
-- AI Healthcare and Medical
-- AI Computer Vision
-- AI Technology and Infrastructure
-
-Respond in JSON format:
-{{
-    "is_ai_topic": true/false,
-    "confidence": 0.0-1.0,
-    "topic": "specific AI topic or null",
-    "explanation": "brief explanation",
-    "keywords": ["key", "terms"]
-}}"""
-
-                                
-            response = self.anthropic_client.messages.create(
-                model="claude-3-5-haiku-20241022",
-                max_tokens=300,
-                temperature=0.1,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ]
-            )
-            
-                                
-            response_text = response.content[0].text.strip()
-            
-                                                   
-            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
-            if json_match:
-                try:
-                    result_data = json.loads(json_match.group())
-                    return AITopicResult(
-                        is_ai_topic=result_data.get('is_ai_topic', False),
-                        confidence=result_data.get('confidence', 0.5),
-                        topic=result_data.get('topic'),
-                        explanation=f"Claude: {result_data.get('explanation', 'AI classification completed')}",
-                        keywords=result_data.get('keywords', [])
-                    )
-                except json.JSONDecodeError:
-                    pass
-            
-                                                       
-            return self._parse_anthropic_response(response_text, full_text)
-            
-        except Exception as e:
-            self.logger.error(f"Anthropic classification failed: {e}")
-                                               
-            return self._classify_with_fallback(text, title)
-    
     def _parse_openai_response(self, response_text: str, full_text: str) -> AITopicResult:
         """Parse OpenAI response manually if JSON parsing fails."""
         response_lower = response_text.lower()
@@ -270,27 +182,6 @@ Respond in JSON format:
             confidence=confidence,
             topic=topic,
             explanation=f"OpenAI manual parsing: {response_text[:100]}...",
-            keywords=keywords
-        )
-    
-    def _parse_anthropic_response(self, response_text: str, full_text: str) -> AITopicResult:
-        """Parse Anthropic response manually if JSON parsing fails."""
-        response_lower = response_text.lower()
-        
-                                                 
-        is_ai_topic = any(indicator in response_lower for indicator in [
-            'true', 'yes', 'ai-related', 'artificial intelligence', 'primarily about ai'
-        ])
-        
-        confidence = 0.8 if is_ai_topic else 0.7
-        topic = self._extract_topic_from_response(response_text) if is_ai_topic else None
-        keywords = self._extract_keywords_from_text(full_text)
-        
-        return AITopicResult(
-            is_ai_topic=is_ai_topic,
-            confidence=confidence,
-            topic=topic,
-            explanation=f"Claude manual parsing: {response_text[:100]}...",
             keywords=keywords
         )
     
@@ -410,9 +301,9 @@ def classify_articles_ai_topics(articles: List[Dict[str, Any]]) -> List[Dict[str
             
             classified_articles.append(article)
             
-                                                          
-            if classifier.openai_client or classifier.anthropic_client:
-                time.sleep(0.1)                                 
+
+            if classifier.openai_client:
+                time.sleep(0.1)
             
         except Exception as e:
             logger.error(f"Error classifying article {article.get('url', 'unknown')}: {e}")
