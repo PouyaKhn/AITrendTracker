@@ -140,6 +140,40 @@ The application can be run as a systemd service. A sample service file (`streaml
 - Supports base path configuration for subdirectory deployment
 - Logs to systemd journal
 
+### Pipeline Service (decoupled from the dashboard)
+
+The data pipeline runs as its **own** systemd service (`aitrendtracker-pipeline.service`),
+independent of the Streamlit dashboard. This is important: previously the pipeline was
+launched as a child process of the Streamlit server, so any restart of the dashboard
+(deploy, crash + `Restart=always`, or a server reboot) sent `SIGTERM` to the pipeline and
+killed it — and it never came back until someone clicked **Start** again.
+
+With a dedicated unit:
+- The pipeline survives dashboard restarts/deploys/reboots.
+- `Restart=always` auto-recovers it if it ever exits.
+- The dashboard's **Start/Stop** buttons control this unit via `systemctl` instead of
+  spawning a child process.
+
+Because the dashboard runs as the `deployer` user, a scoped `sudoers` rule grants
+password-less control of *only* this unit:
+
+```
+# /etc/sudoers.d/aitrendtracker-pipeline
+deployer ALL=(root) NOPASSWD: /usr/bin/systemctl start aitrendtracker-pipeline.service, \
+                              /usr/bin/systemctl stop aitrendtracker-pipeline.service, \
+                              /usr/bin/systemctl restart aitrendtracker-pipeline.service
+```
+
+Install and enable it:
+
+```bash
+sudo cp aitrendtracker-pipeline.service /etc/systemd/system/
+sudo cp deploy/aitrendtracker-pipeline.sudoers /etc/sudoers.d/aitrendtracker-pipeline
+sudo chmod 440 /etc/sudoers.d/aitrendtracker-pipeline
+sudo systemctl daemon-reload
+sudo systemctl enable --now aitrendtracker-pipeline
+```
+
 ### Nginx Reverse Proxy
 
 For production deployment with a custom domain, use Nginx as a reverse proxy. A sample configuration (`nginx-ai-center.conf`) is provided.

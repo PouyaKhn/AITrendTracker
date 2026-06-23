@@ -1,0 +1,9 @@
+# Scoped, password-less control of the pipeline service for the dashboard user.
+# Install to /etc/sudoers.d/aitrendtracker-pipeline with mode 0440 (root:root).
+# Validate before use:  visudo -cf deploy/aitrendtracker-pipeline.sudoers
+#
+# Grants the `deployer` account (which runs the Streamlit dashboard) the ability
+# to start/stop/restart ONLY the aitrendtracker-pipeline unit without a password,
+# so the dashboard's Start/Stop buttons work non-interactively. No other commands
+# are permitted by this rule.
+deployer ALL=(root) NOPASSWD: /usr/bin/systemctl start aitrendtracker-pipeline.service, /usr/bin/systemctl stop aitrendtracker-pipeline.service, /usr/bin/systemctl restart aitrendtracker-pipeline.service

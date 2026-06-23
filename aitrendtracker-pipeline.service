@@ -1,0 +1,18 @@
+[Unit]
+Description=AI Trend Tracker Pipeline (GDELT fetch + AI classification)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=deployer
+WorkingDirectory=/home/deployer/Secondment
+# Unlimited mode; FETCH_INTERVAL and API keys come from the project .env (loaded by main.py)
+Environment=MAX_ARTICLES=0
+ExecStart=/home/deployer/Secondment/venv/bin/python main.py
+# Auto-recover if the pipeline ever exits for any reason
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

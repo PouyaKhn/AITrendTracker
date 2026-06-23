@@ -1457,114 +1457,82 @@ def main():
         """, unsafe_allow_html=True)
     
     config = load_config()
-    pid_file = config.storage_dir / "pipeline.pid"
+    PIPELINE_UNIT = "aitrendtracker-pipeline.service"
     start_time_file = config.storage_dir / "pipeline_start.txt"
-    
-    def _read_pid() -> int:
+
+    def _run_systemctl(action: str):
+        """Run a systemctl action on the dedicated pipeline service.
+
+        start/stop/restart need root and are permitted for the service account
+        via a scoped NOPASSWD sudoers rule; status queries run unprivileged.
+        Returns (ok: bool, output: str).
+        """
         try:
-            if pid_file.exists():
-                pid_text = pid_file.read_text().strip()
-                return int(pid_text) if pid_text else 0
-            return 0
-        except Exception:
-            return 0
-    
-    def _is_pid_running(pid: int) -> bool:
-        if pid <= 0:
-            return False
+            if action in ("start", "stop", "restart"):
+                cmd = ["sudo", "-n", "/usr/bin/systemctl", action, PIPELINE_UNIT]
+            else:
+                cmd = ["/usr/bin/systemctl", action, PIPELINE_UNIT]
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            return result.returncode == 0, (result.stdout or "") + (result.stderr or "")
+        except Exception as e:
+            return False, str(e)
+
+    def _is_pipeline_active() -> bool:
+        """True when the pipeline systemd service is active (running)."""
         try:
-                                                       
-            os.kill(pid, 0)
-            return True
-        except ProcessLookupError:
-            return False
-        except PermissionError:
-                                                        
-            return True
-        except Exception:
-            return False
-    
-    def _start_pipeline_subprocess() -> bool:
-        try:
-                                            
-            existing_pid = _read_pid()
-            if _is_pid_running(existing_pid):
-                return True
-            
-            env = os.environ.copy()
-            env['MAX_ARTICLES'] = '0'
-            
-            from dotenv import dotenv_values
-            env_file = Path(__file__).parent / '.env'
-            if env_file.exists():
-                env_vars = dotenv_values(env_file)
-                for key, value in env_vars.items():
-                    if value is not None:
-                        value = str(value).strip()
-                        if value:
-                            env[key] = value
-            
-            proc = subprocess.Popen(
-                [sys.executable, 'main.py'],
-                cwd=Path(__file__).parent,
-                env=env
+            result = subprocess.run(
+                ["/usr/bin/systemctl", "is-active", PIPELINE_UNIT],
+                capture_output=True, text=True, timeout=10
             )
-            pid_file.parent.mkdir(parents=True, exist_ok=True)
-            pid_file.write_text(str(proc.pid))
-                               
-            try:
-                start_time_file.write_text(datetime.now().isoformat())
-            except Exception:
-                pass
-            return True
-        except Exception as e:
-            st.error(f"Failed to start pipeline: {e}")
+            return result.stdout.strip() == "active"
+        except Exception:
             return False
-    
-    def _stop_pipeline_subprocess() -> bool:
+
+    def _pipeline_start_time() -> str:
+        """ISO timestamp of when the service last entered the active state."""
         try:
-            pid = _read_pid()
-            if pid <= 0:
-                return True
-                               
-            try:
-                os.kill(pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
-                          
-            time.sleep(1.0)
-                                          
-            if _is_pid_running(pid):
-                try:
-                    os.kill(pid, signal.SIGKILL)
-                except Exception:
-                    pass
-                               
-            try:
-                if pid_file.exists():
-                    pid_file.unlink()
-            except Exception:
-                pass
+            result = subprocess.run(
+                ["/usr/bin/systemctl", "show", "-p", "ActiveEnterTimestamp",
+                 "--value", PIPELINE_UNIT],
+                capture_output=True, text=True, timeout=10
+            )
+            return result.stdout.strip()
+        except Exception:
+            return ""
+
+    def _start_pipeline_subprocess() -> bool:
+        """Start the pipeline via its dedicated systemd service."""
+        if _is_pipeline_active():
             return True
-        except Exception as e:
-            st.error(f"Failed to stop pipeline: {e}")
+        ok, output = _run_systemctl("start")
+        if not ok:
+            st.error(f"Failed to start pipeline: {output.strip() or 'systemctl start failed'}")
             return False
+        try:
+            start_time_file.write_text(datetime.now().isoformat())
+        except Exception:
+            pass
+        return True
+
+    def _stop_pipeline_subprocess() -> bool:
+        """Stop the pipeline via its dedicated systemd service."""
+        if not _is_pipeline_active():
+            return True
+        ok, output = _run_systemctl("stop")
+        if not ok:
+            st.error(f"Failed to stop pipeline: {output.strip() or 'systemctl stop failed'}")
+            return False
+        return True
     
                               
-    current_pid = _read_pid()
-    is_running = _is_pid_running(current_pid)
+    is_running = _is_pipeline_active()
     
     if 'pipeline_was_running' not in st.session_state:
         st.session_state.pipeline_was_running = False
     
     st.session_state.pipeline_was_running = is_running
                        
-    start_time_val = None
-    try:
-        if start_time_file.exists():
-            start_time_val = start_time_file.read_text().strip()
-    except Exception:
-        start_time_val = None
+    start_time_val = _pipeline_start_time() or None
     
     last_update_val = None
     try:
@@ -1622,8 +1590,8 @@ def main():
                         st.warning("💡 Pipeline may not actually be running")
                         
                                              
-                        st.write(f"**Current Status:** {'running' if _is_pid_running(_read_pid()) else 'stopped'}")
-                        st.write(f"**PID:** {_read_pid() or 'N/A'}")
+                        st.write(f"**Current Status:** {'running' if _is_pipeline_active() else 'stopped'}")
+                        st.write(f"**Unit:** {PIPELINE_UNIT}")
                         
                                                      
                         if st.button("🔧 Force Stop", type="secondary", width='stretch'):
