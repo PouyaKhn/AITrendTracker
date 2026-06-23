@@ -1079,7 +1079,9 @@ def main():
                                                          
     typeface_logo = base64.b64encode(open("images/5. typeface_#0f0f0f.png", "rb").read()).decode()
     
-    base_path = "/aitrendtracker"
+    # App is served at the subdomain root (aitrendtracker.ai-center.dk/), so links
+    # are root-relative. Override with BASE_URL_PATH if deployed under a sub-path.
+    base_path = os.getenv("BASE_URL_PATH", "")
     en_link = f"{base_path}/?lang=en"
     da_link = f"{base_path}/?lang=da"
     
