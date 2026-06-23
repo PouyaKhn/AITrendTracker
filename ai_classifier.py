@@ -132,34 +132,58 @@ An article should be considered AI-related if it primarily discusses artificial 
 
 Respond only with the JSON format."""
 
-            response = self.openai_client.chat.completions.create(
-                model="gpt-4o-mini-2024-07-18",
-                messages=[
-                    {"role": "system", "content": "You are an AI researcher who classifies whether articles are about artificial intelligence topics."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.1,
-                max_tokens=300
-            )
-            
-            response_text = response.choices[0].message.content.strip()
-            
-            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
-            if json_match:
+            # Retry transient API errors (rate limits, timeouts) with exponential
+            # backoff instead of silently falling back to weak keyword matching.
+            response_text = None
+            last_error = None
+            for attempt in range(3):
                 try:
-                    result_data = json.loads(json_match.group())
-                    return AITopicResult(
-                        is_ai_topic=result_data.get('is_ai_topic', False),
-                        confidence=result_data.get('confidence', 0.5),
-                        topic=result_data.get('topic'),
-                        explanation=f"OpenAI: {result_data.get('explanation', 'AI classification completed')}",
-                        keywords=result_data.get('keywords', [])
+                    response = self.openai_client.chat.completions.create(
+                        model="gpt-4o-mini-2024-07-18",
+                        messages=[
+                            {"role": "system", "content": "You are an AI researcher who classifies whether articles are about artificial intelligence topics."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=0.1,
+                        max_tokens=300,
+                        # Force well-formed JSON so we don't have to scrape it from prose.
+                        response_format={"type": "json_object"},
                     )
-                except json.JSONDecodeError:
-                    pass
-            
-            return self._parse_openai_response(response_text, full_text)
-            
+                    response_text = response.choices[0].message.content.strip()
+                    break
+                except Exception as api_error:
+                    last_error = api_error
+                    self.logger.warning(f"OpenAI request attempt {attempt + 1}/3 failed: {api_error}")
+                    if attempt < 2:
+                        time.sleep(2 ** attempt)  # 1s, 2s
+
+            if response_text is None:
+                self.logger.error(f"OpenAI classification failed after retries: {last_error}")
+                return self._classify_with_fallback(text, title)
+
+            # With JSON mode the response is already valid JSON; parse directly and
+            # keep the regex extraction only as a defensive fallback.
+            try:
+                result_data = json.loads(response_text)
+            except json.JSONDecodeError:
+                json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+                result_data = None
+                if json_match:
+                    try:
+                        result_data = json.loads(json_match.group())
+                    except json.JSONDecodeError:
+                        result_data = None
+                if result_data is None:
+                    return self._parse_openai_response(response_text, full_text)
+
+            return AITopicResult(
+                is_ai_topic=result_data.get('is_ai_topic', False),
+                confidence=result_data.get('confidence', 0.5),
+                topic=result_data.get('topic'),
+                explanation=f"OpenAI: {result_data.get('explanation', 'AI classification completed')}",
+                keywords=result_data.get('keywords', [])
+            )
+
         except Exception as e:
             self.logger.error(f"OpenAI classification failed: {e}")
             return self._classify_with_fallback(text, title)
